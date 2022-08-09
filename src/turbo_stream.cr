@@ -12,8 +12,10 @@ class TurboStream < Template
   end
 
   template do
-    turbo_stream({"action", @action}, {"targets", @targets}) do
-      @content
+    turbo_stream({"action", @action}, {"targets", @targets.to_s.dump_unquoted}) do
+      template_tag do
+        @content
+      end
     end
   end
 end

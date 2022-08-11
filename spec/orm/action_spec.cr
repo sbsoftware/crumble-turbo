@@ -8,7 +8,7 @@ module ActionSpec
     id_column id : Int64?
     column my_flag : Bool?
 
-    boolean_flip_action :switch, :my_flag
+    boolean_flip_action :switch, :my_flag, :default_view
 
     template :default_view do
       within switch_action.template do
@@ -40,8 +40,9 @@ describe "the switch action" do
     mdl.id = 77
     mdl.my_flag = true
     expected_html = <<-HTML
-    <h1>SWITCH ACTION</h1>
-    <div><strong data-crumble-attr-id="77">something</strong>
+    <div data-controller="boolean-flip"><form method="POST" action="/a/action_spec/my_model/77/switch"><input type="Hidden" name="value" value="false"><input type="Submit" data-boolean-flip-target="submitButton"></form>
+    <div data-action="click->boolean-flip#flip"><strong data-crumble-action-spec::my-model-id="77">something</strong>
+    </div>
     </div>
 
     HTML

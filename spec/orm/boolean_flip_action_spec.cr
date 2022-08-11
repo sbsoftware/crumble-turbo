@@ -3,7 +3,7 @@ require "crumble"
 require "../../src/orm/boolean_flip_action"
 require "../../src/orm/orm"
 
-module ActionSpec
+module BooleanFlipSpec
   class MyModel < Crumble::ORM::Base
     id_column id : Int64?
     column my_flag : Bool?
@@ -22,26 +22,26 @@ end
 
 describe "the switch action" do
   it "can be applied to set true" do
-    mdl = ActionSpec::MyModel.new
+    mdl = BooleanFlipSpec::MyModel.new
     mdl.my_flag = false
     mdl.switch_action.apply(true)
     mdl.my_flag.value.should eq(true)
   end
 
   it "can be applied to set False" do
-    mdl = ActionSpec::MyModel.new
+    mdl = BooleanFlipSpec::MyModel.new
     mdl.my_flag = true
     mdl.switch_action.apply(false)
     mdl.my_flag.value.should eq(false)
   end
 
   it "provides a template" do
-    mdl = ActionSpec::MyModel.new
+    mdl = BooleanFlipSpec::MyModel.new
     mdl.id = 77
     mdl.my_flag = true
     expected_html = <<-HTML
-    <div data-controller="boolean-flip"><form method="POST" action="/a/action_spec/my_model/77/switch"><input type="Hidden" name="value" value="false"><input type="Submit" data-boolean-flip-target="submitButton"></form>
-    <div data-action="click->boolean-flip#flip"><strong data-crumble-action-spec::my-model-id="77">something</strong>
+    <div data-controller="boolean-flip"><form method="POST" action="/a/boolean_flip_spec/my_model/77/switch"><input type="Hidden" name="value" value="false"><input type="Submit" data-boolean-flip-target="submitButton"></form>
+    <div data-action="click->boolean-flip#flip"><strong data-crumble-boolean-flip-spec::my-model-id="77">something</strong>
     </div>
     </div>
 

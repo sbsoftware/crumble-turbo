@@ -20,7 +20,7 @@ describe "a model defining a model template" do
     mdl.id = 65
     mdl.name = "Pavel"
     expected_html = <<-HTML
-    <div data-crumble-attr-id="65"><strong>Pavel</strong>
+    <div data-crumble-my-template-model-id="65"><strong>Pavel</strong>
     </div>
 
     HTML
@@ -32,8 +32,9 @@ describe "a model defining a model template" do
     mdl.id = 66
     mdl.name = "Bronko"
     expected_html = <<-HTML
-    <turbo-stream action="replace" targets="[data-crumble-attr-id=\"66\"]"><div data-crumble-attr-id="66"><strong>Bronko</strong>
+    <turbo-stream action="replace" targets="[data-crumble-my-template-model-id='66']"><template><div data-crumble-my-template-model-id="66"><strong>Bronko</strong>
     </div>
+    </template>
     </turbo-stream>
 
     HTML
@@ -46,7 +47,7 @@ describe "a model defining a model template" do
       mdl.id = 67
       mdl.name = "Vasily"
       expected_html = <<-HTML
-      <li data-crumble-attr-id=\"67\"><strong>Vasily</strong>
+      <li data-crumble-my-template-model-id="67"><strong>Vasily</strong>
       </li>
 
       HTML

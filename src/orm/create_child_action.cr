@@ -2,9 +2,9 @@ require "./action"
 
 module Crumble::ORM
   abstract class CreateChildAction < Action
-    template :template do
+    template :form_template do
       form action(uri_path), Method::Post do
-        input(InputType::Submit, {"name", "Submit"})
+        main_docking_point
       end
     end
 

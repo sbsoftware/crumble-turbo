@@ -48,6 +48,12 @@ module Crumble::ORM
 
         def initialize(@model); end
 
+        template :template do
+          within form_template do
+            _extract_blk_call("form") {{blk}}
+          end
+        end
+
         def model_template : Crumble::ModelTemplate
           model.{{tpl.id}}
         end

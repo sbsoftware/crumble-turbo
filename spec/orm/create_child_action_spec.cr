@@ -13,7 +13,12 @@ module CreateChildSpec
   class MyModel < Crumble::ORM::Base
     id_column id : Int64?
 
-    create_child_action :add_child, ChildModel, my_model_id, default_view
+    create_child_action :add_child, ChildModel, my_model_id, default_view do
+      form do
+        input(InputType::Text, {"name", "name"})
+        input(InputType::Submit, {"name", "Add Child"})
+      end
+    end
 
     template :default_view do
       div do
@@ -28,7 +33,7 @@ describe "MyModel #add_child_action" do
     my_model = CreateChildSpec::MyModel.new
     my_model.id = 7
     expected_html = <<-HTML
-    <form action="/a/create_child_spec/my_model/7/add_child" method="POST"><input type="Submit" name="Submit"></form>
+    <form action="/a/create_child_spec/my_model/7/add_child" method="POST"><input type="Text" name="name"><input type="Submit" name="Add Child"></form>
 
     HTML
 

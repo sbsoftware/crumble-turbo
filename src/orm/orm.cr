@@ -41,7 +41,7 @@ module Crumble::ORM
     end
 
     macro create_child_action(name, child_class, parent_id_attr, tpl, &blk)
-      class {{name.capitalize.id}}Action < Crumble::ORM::CreateChildAction
+      class {{name.camelcase.id}}Action < Crumble::ORM::CreateChildAction
         PATH_MATCHER = /#{Crumble::ORM::Action::URI_PATH_PREFIX}\/{{@type.resolve.name.gsub(/::/, "\\/").underscore.id}}\/(\d+)\/{{name.id}}/
 
         getter model : {{@type}}
@@ -50,7 +50,7 @@ module Crumble::ORM
 
         template :template do
           within form_template do
-            _extract_blk_call("form") {{blk}}
+            _extract_nested_blk("form") {{blk}}
           end
         end
 
@@ -66,9 +66,19 @@ module Crumble::ORM
           {{child_class.resolve}}
         end
 
-        def child_instance
+        def child_instance(req_body : String)
           child = self.class.child_class.new
           child.{{parent_id_attr}} = model.id
+          HTTP::Params.parse(req_body) do |name, value|
+            {% if blk.is_a?(Block) %}
+              case name
+                {% for attr in blk.body.expressions.find { |exp| exp.is_a?(Call) && exp.name.id == "params".id }.args %}
+                  when {{attr.id.stringify}}
+                    child.{{attr.id}} = value
+                {% end %}
+              end
+            {% end %}
+          end
           child
         end
 
@@ -82,10 +92,10 @@ module Crumble::ORM
       end
 
       def {{name.id}}_action
-        {{name.capitalize.id}}Action.new(self)
+        {{name.camelcase.id}}Action.new(self)
       end
 
-      Crumble::ORM::ActionRegistry.add({{@type.name}}::{{name.capitalize.id}}Action)
+      Crumble::ORM::ActionRegistry.add({{@type.name}}::{{name.camelcase.id}}Action)
     end
   end
 end

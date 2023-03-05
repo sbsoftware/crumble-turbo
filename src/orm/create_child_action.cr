@@ -15,7 +15,7 @@ module Crumble::ORM
       parent_id = match[1]
       model = model_class.find(parent_id)
       action = self.new(model)
-      child = action.child_instance
+      child = action.child_instance(ctx.request.body.try(&.gets_to_end) || "")
       child.save
 
       ctx.response.headers.add("Content-Type", TURBO_STREAM_MIME_TYPE)

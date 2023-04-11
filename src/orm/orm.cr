@@ -20,16 +20,16 @@ module Crumble::ORM
           model.{{tpl.id}}
         end
 
-        def self.model_class : Crumble::ORM::Base.class
-          {{@type.resolve}}
+        def self.action_name : String
+          {{name.id.stringify}}
         end
 
         def self.path_matcher : Regex
           PATH_MATCHER
         end
 
-        def uri_path : String
-          "#{Crumble::ORM::Action::URI_PATH_PREFIX}/{{@type.resolve.name.gsub(/::/, "/").underscore.id}}/#{model.id.value}/{{name.id}}"
+        def self.model_class : Crumble::ORM::Base.class
+          {{@type.resolve}}
         end
       end
 
@@ -58,6 +58,10 @@ module Crumble::ORM
           model.{{tpl.id}}
         end
 
+        def self.action_name : String
+          {{name.id.stringify}}
+        end
+
         def self.model_class : Crumble::ORM::Base.class
           {{@type.resolve}}
         end
@@ -84,10 +88,6 @@ module Crumble::ORM
 
         def self.path_matcher : Regex
           PATH_MATCHER
-        end
-
-        def uri_path : String
-          "#{Crumble::ORM::Action::URI_PATH_PREFIX}/{{@type.resolve.name.gsub(/::/, "/").underscore.id}}/#{model.id.value}/{{name.id}}"
         end
       end
 

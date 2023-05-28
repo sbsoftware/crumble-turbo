@@ -40,6 +40,13 @@ module CreateChildSpec
   end
 end
 
+# TODO: Fix this in crumble
+class ExpectedQuery
+  def set_result(data : Array(Hash(String, DB::Any)))
+    @result = FakeResult.new(data)
+  end
+end
+
 describe "MyModel #add_child_action" do
   it "has a template" do
     my_model = CreateChildSpec::MyModel.new

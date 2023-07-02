@@ -18,6 +18,12 @@ module Crumble::ORM
           model.{{tpl.id}}
         end
 
+        {% if blk.is_a?(Block) && blk.body.is_a?(Call) && blk.body.name.id == "before".id %}
+        def before_action({{blk.body.block.args.splat}})
+          {{blk.body.block.body}}
+        end
+        {% end %}
+
         def self.action_name : String
           {{name.id.stringify}}
         end
@@ -61,6 +67,12 @@ module Crumble::ORM
         def self.child_class : Crumble::ORM::Base.class
           {{child_class.resolve}}
         end
+
+        {% if blk.body.is_a?(Expressions) && blk.body.expressions.find { |e| e.is_a?(Call) && e.name.id == "before".id } %}
+        def before_action({{blk.body.expressions.find { |e| e.is_a?(Call) && e.name.id == "before".id }.block.args.splat}})
+          {{blk.body.expressions.find { |e| e.is_a?(Call) && e.name.id == "before".id }.block.body}}
+        end
+        {% end %}
 
         def child_instance(req_body : String)
           child = self.class.child_class.new

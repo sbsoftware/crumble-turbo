@@ -8,7 +8,11 @@ module BooleanFlipSpec
     id_column id : Int64?
     column my_flag : Bool?
 
-    boolean_flip_action :switch, :my_flag, :default_view
+    boolean_flip_action :switch, :my_flag, :default_view do
+      before do |ctx, model|
+        model.id.value == 77
+      end
+    end
 
     template :default_view do
       within switch_action.template do

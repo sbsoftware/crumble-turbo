@@ -15,9 +15,13 @@ module Crumble::ORM
       parent_id = match[1]
       model = model_class.find(parent_id)
       action = self.new(model)
+
+      return true if action.before_action_halted?(ctx)
+
       child = action.child_instance(ctx.request.body.try(&.gets_to_end) || "")
       child.save
 
+      ctx.response.status_code = 201
       ctx.response.headers.add("Content-Type", TURBO_STREAM_MIME_TYPE)
       ctx.response << action.model_template.turbo_stream
 

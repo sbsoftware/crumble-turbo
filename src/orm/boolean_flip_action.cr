@@ -47,6 +47,9 @@ module Crumble::ORM
 
       model = model_class.find(id)
       instance = self.new(model)
+
+      return true if instance.before_action_halted?(ctx)
+
       unless new_val.nil?
         instance.apply(new_val)
       end

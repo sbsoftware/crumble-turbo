@@ -1,20 +1,20 @@
-require "crumble"
+require "to_html"
 require "./turbo_stream/action"
 
-class TurboStream < Template
-  {{ Template::CONTENT_TAG_NAMES << "turbo_stream" }}
+class TurboStream(T)
+  {{ ToHtml::TAG_NAMES["turbo_stream"] = "turbo-stream" }}
 
   @action : TurboStream::Action
   @targets : CSS::Selector
-  @content : Template
+  @content : T
 
   def initialize(@action : TurboStream::Action, @targets, @content)
   end
 
-  template do
-    turbo_stream({"action", @action}, {"targets", @targets.to_s.dump_unquoted}) do
-      template_tag do
-        @content
+  ToHtml.instance_template do
+    turbo_stream(action: @action, targets: @targets.to_s.dump_unquoted) do
+      template do
+        @content.to_html
       end
     end
   end

@@ -46,10 +46,22 @@ module Crumble::ORM
 
         def initialize(@model); end
 
-        template :template do
-          within form_template do
-            _extract_nested_blk("form") {{blk}}
+        private class Template
+          getter parent : Crumble::ORM::CreateChildAction
+
+          def initialize(@parent); end
+
+          ToHtml.instance_template do
+            parent.form_template.to_html do
+              {% if blk.body.is_a?(Expressions) && blk.body.expressions.find { |e| e.is_a?(Call) && e.name.id == "form".id } %}
+                {{blk.body.expressions.find { |e| e.is_a?(Call) && e.name.id == "form".id }.block.body}}
+              {% end %}
+            end
           end
+        end
+
+        def template
+          Template.new(self)
         end
 
         def model_template : Crumble::ModelTemplate

@@ -1,4 +1,4 @@
-class TurboStream < Template
+class TurboStream(T)
   enum Action
     Replace
 

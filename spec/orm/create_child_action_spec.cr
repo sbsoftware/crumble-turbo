@@ -25,8 +25,8 @@ module CreateChildSpec
       end
 
       form do
-        input(InputType::Text, {"name", "name"})
-        input(InputType::Submit, {"name", "Add Child"})
+        input(type: "text", name: "name")
+        input(type: "submit", name: "Add Child")
       end
 
       params :name
@@ -34,8 +34,8 @@ module CreateChildSpec
 
     create_child_action :always_add_child, ChildModel, my_model_id, default_view do
       form do
-        input(InputType::Text, {"name", "name"})
-        input(InputType::Submit, {"name", "Always Add Child"})
+        input(type: "text", name: "name")
+        input(type: "submit", name: "Always Add Child")
       end
 
       params :name
@@ -65,11 +65,10 @@ describe "MyModel #add_child_action" do
     my_model = CreateChildSpec::MyModel.new
     my_model.id = 7
     expected_html = <<-HTML
-    <form action="/a/create_child_spec/my_model/7/add_child" method="POST"><input type="Text" name="name"><input type="Submit" name="Add Child"></form>
-
+    <form action="/a/create_child_spec/my_model/7/add_child" method="POST"><input type="text" name="name"><input type="submit" name="Add Child"></form>
     HTML
 
-    my_model.add_child_action.template.to_s.should eq(expected_html)
+    my_model.add_child_action.template.to_html.should eq(expected_html)
   end
 
   context "when handling a request" do

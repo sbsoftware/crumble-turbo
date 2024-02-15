@@ -1,7 +1,14 @@
-class BooleanFlipController < StimulusController
+require "stimulus"
+
+class BooleanFlipController < Stimulus::Controller
   targets :submitButton, :formEl
 
-  method :flip do
+  action :flip do
     this.submitButtonTarget.click
+  end
+
+  # TODO: Remove as soon as `crumble-stimulus` supports selectors
+  def self.selector
+    CSS::AttrSelector.new("data-controller", controller_name)
   end
 end

@@ -2,10 +2,20 @@ require "./action"
 
 module Crumble::ORM
   abstract class CreateChildAction < Action
-    template :form_template do
-      form action(uri_path), Method::Post do
-        main_docking_point
+    private class FormTemplate
+      getter uri_path : String
+
+      def initialize(@uri_path); end
+
+      ToHtml.instance_template do
+        form action: uri_path, method: "POST" do
+          yield
+        end
       end
+    end
+
+    def form_template
+      FormTemplate.new(uri_path)
     end
 
     def self.handle(ctx) : Bool
@@ -23,7 +33,7 @@ module Crumble::ORM
 
       ctx.response.status_code = 201
       ctx.response.headers.add("Content-Type", TURBO_STREAM_MIME_TYPE)
-      ctx.response << action.model_template.turbo_stream
+      action.model_template.turbo_stream.to_html(ctx.response)
 
       true
     end

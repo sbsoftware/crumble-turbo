@@ -11,19 +11,19 @@ module Crumble::ORM
       attribute.value = new_val
     end
 
-    private class Template < ::Template
+    private class Template
       getter parent : BooleanFlipAction
 
       def initialize(@parent); end
 
-      template do
+      ToHtml.instance_template do
         div BooleanFlipController do
-          form Method::Post, action(parent.uri_path) do
-            input(InputType::Hidden, {"name", "value"}, {"value", (!parent.attribute.value).to_s})
-            input(InputType::Submit, BooleanFlipController.submitButton_target)
+          form method: "POST", action: parent.uri_path do
+            input(type: "hidden", name: "value", value: (!parent.attribute.value).to_s)
+            input(BooleanFlipController.submitButton_target, type: "submit")
           end
-          div BooleanFlipController.flip_action(ClickEvent) do
-            main_docking_point
+          div BooleanFlipController.flip_action("click") do
+            yield
           end
         end
       end
@@ -56,7 +56,7 @@ module Crumble::ORM
       model.save
 
       ctx.response.headers.add("Content-Type", TURBO_STREAM_MIME_TYPE)
-      instance.model_template.turbo_stream.to_s(ctx.response)
+      instance.model_template.turbo_stream.to_html(ctx.response)
 
       true
     end

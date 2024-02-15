@@ -20,25 +20,21 @@ describe "a model defining a model template" do
     mdl.id = 65
     mdl.name = "Pavel"
     expected_html = <<-HTML
-    <div data-crumble-my-template-model-id="65"><strong>Pavel</strong>
-    </div>
-
+    <div data-crumble-my-template-model-id="65"><strong>Pavel</strong></div>
     HTML
-    mdl.default_model_template.to_s.should eq(expected_html)
+    mdl.default_model_template.to_html.should eq(expected_html)
   end
 
   it "returns a valid turbo stream template" do
     mdl = MyTemplateModel.new
     mdl.id = 66
     mdl.name = "Bronko"
-    expected_html = <<-HTML
-    <turbo-stream action="replace" targets="[data-crumble-my-template-model-id='66']"><template><div data-crumble-my-template-model-id="66"><strong>Bronko</strong>
-    </div>
-    </template>
-    </turbo-stream>
 
+    expected_html = <<-HTML
+    <turbo-stream action="replace" targets="[data-crumble-my-template-model-id='66']"><template><div data-crumble-my-template-model-id="66"><strong>Bronko</strong></div></template></turbo-stream>
     HTML
-    mdl.default_model_template.turbo_stream.to_s.should eq(expected_html)
+
+    mdl.default_model_template.turbo_stream.to_html.should eq(expected_html)
   end
 
   context "when a tag name has been provided" do
@@ -46,12 +42,12 @@ describe "a model defining a model template" do
       mdl = MyTemplateModel.new
       mdl.id = 67
       mdl.name = "Vasily"
-      expected_html = <<-HTML
-      <li data-crumble-my-template-model-id="67"><strong>Vasily</strong>
-      </li>
 
+      expected_html = <<-HTML
+      <li data-crumble-my-template-model-id="67"><strong>Vasily</strong></li>
       HTML
-      mdl.alternative_model_template.to_s.should eq(expected_html)
+
+      mdl.alternative_model_template.to_html.should eq(expected_html)
     end
   end
 end

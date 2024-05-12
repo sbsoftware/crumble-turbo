@@ -8,3 +8,5 @@ dependencies:
     version: ">= 0.12"
   crumble-stimulus:
     github: sbsoftware/crumble-stimulus
+  orma:
+    github: sbsoftware/orma

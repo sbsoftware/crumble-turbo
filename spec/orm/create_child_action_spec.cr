@@ -1,12 +1,10 @@
 require "uri"
-require "spec"
-require "crumble"
-require "crumble/spec/orm/fake_db"
+require "orma/spec/fake_db"
 require "../support/mock_context"
 require "../../src/crumble-turbo"
 
 module CreateChildSpec
-  class ChildModel < Crumble::ORM::Base
+  class ChildModel < Orma::Record
     id_column id : Int64?
     column my_model_id : Int64?
     column name : String?
@@ -16,7 +14,7 @@ module CreateChildSpec
     end
   end
 
-  class MyModel < Crumble::ORM::Base
+  class MyModel < Orma::Record
     id_column id : Int64?
 
     create_child_action :add_child, ChildModel, my_model_id, default_view do

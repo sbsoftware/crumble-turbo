@@ -17,6 +17,18 @@ macro model_template(method_name, tag = :div, &blk)
   end
 end
 
+# TODO: This probably belongs into `orma` directly or into an integration shard like `crumble-orma`.
+#       Not sure about the CSS part, though.
+class Orma::Attribute(T)
+  def selector
+    CSS::AttrSelector.new("data-crumble-#{model.name.underscore.gsub(/_/, "-").gsub(/::/, "--")}-#{name}", value.to_s)
+  end
+
+  def to_html_attrs(_tag, attrs)
+    attrs["data-crumble-#{model.name.underscore.gsub(/_/, "-").gsub(/::/, "--")}-#{name}"] = value.to_s
+  end
+end
+
 module Crumble
   class ModelTemplate
     def turbo_stream

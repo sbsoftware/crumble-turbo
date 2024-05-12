@@ -1,3 +1,6 @@
+require "crumble"
+require "orma"
+
 require "./turbo_stream"
 require "./model_template"
 require "./orm"

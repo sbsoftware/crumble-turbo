@@ -1,7 +1,6 @@
-require "spec"
-require "../src/model_template"
+require "./spec_helper"
 
-class MyTemplateModel < Crumble::ORM::Base
+class MyTemplateModel < Orma::Record
   id_column id : Int64?
   column name : String?
 

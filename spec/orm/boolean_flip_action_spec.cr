@@ -4,7 +4,7 @@ require "../../src/orm/boolean_flip_action"
 require "../../src/orm/orm"
 
 module BooleanFlipSpec
-  class MyModel < Crumble::ORM::Base
+  class MyModel < Orma::Record
     id_column id : Int64?
     column my_flag : Bool?
 
@@ -14,7 +14,7 @@ module BooleanFlipSpec
       end
     end
 
-    template :default_view do
+    model_template :default_view do
       switch_action.template.to_html do
         strong id do
           "something"
@@ -44,13 +44,15 @@ describe "the switch action" do
     mdl.id = 77
     mdl.my_flag = true
     expected_html = <<-HTML.split(/\n\s*/).join
-    <div data-controller="boolean-flip">
-      <form method="POST" action="/a/boolean_flip_spec/my_model/77/switch">
-        <input type="hidden" name="value" value="false">
-        <input data-boolean-flip-target="submitButton" type="submit">
-      </form>
-      <div data-action="click->boolean-flip#flip">
-        <strong data-crumble-boolean-flip-spec::my-model-id="77">something</strong>
+    <div data-crumble-boolean-flip-spec--my-model-id="77">
+      <div data-controller="boolean-flip">
+        <form method="POST" action="/a/boolean_flip_spec/my_model/77/switch">
+          <input type="hidden" name="value" value="false">
+          <input data-boolean-flip-target="submitButton" type="submit">
+        </form>
+        <div data-action="click->boolean-flip#flip">
+          <strong data-crumble-boolean-flip-spec--my-model-id="77">something</strong>
+        </div>
       </div>
     </div>
     HTML

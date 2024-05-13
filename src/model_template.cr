@@ -1,15 +1,22 @@
 require "crumble"
+require "./identifiable_view"
 require "./turbo_stream"
 
-macro model_template(method_name, tag = :div, &blk)
+macro model_template(method_name, &blk)
   private class {{method_name.id.stringify.camelcase.id}}Template < Crumble::ModelTemplate
+    include IdentifiableView
+
     @model : {{@type}}
 
     forward_missing_to @model
 
     def initialize(@model); end
 
-    Crumble::ModelTemplate.template({{tag}}) {{blk}}
+    def dom_id
+      id
+    end
+
+    Crumble::ModelTemplate.template {{blk}}
   end
 
   def {{method_name.id}}
@@ -31,15 +38,9 @@ end
 
 module Crumble
   class ModelTemplate
-    def turbo_stream
-      TurboStream.new(:replace, id.selector, self)
-    end
-
-    macro template(tag, &blk)
+    macro template(&blk)
       ToHtml.instance_template do
-        {{tag.id}} id do
-          {{blk.body}}
-        end
+        {{blk.body}}
       end
     end
   end

@@ -7,10 +7,6 @@ class MyTemplateModel < Orma::Record
   model_template :default_model_template do
     strong { name }
   end
-
-  model_template :alternative_model_template, :li do
-    strong { name }
-  end
 end
 
 describe "a model defining a model template" do
@@ -34,19 +30,5 @@ describe "a model defining a model template" do
     HTML
 
     mdl.default_model_template.turbo_stream.to_html.should eq(expected_html)
-  end
-
-  context "when a tag name has been provided" do
-    it "wraps the template in the tag" do
-      mdl = MyTemplateModel.new
-      mdl.id = 67
-      mdl.name = "Vasily"
-
-      expected_html = <<-HTML
-      <li data-crumble-my-template-model-id="67"><strong>Vasily</strong></li>
-      HTML
-
-      mdl.alternative_model_template.to_html.should eq(expected_html)
-    end
   end
 end

@@ -3,7 +3,7 @@ require "./identifiable_view"
 require "./turbo_stream"
 
 macro model_template(method_name, &blk)
-  private class {{method_name.id.stringify.camelcase.id}}Template < Crumble::ModelTemplate
+  private class {{method_name.id.stringify.camelcase.id}}Template
     include IdentifiableView
 
     @model : {{@type}}
@@ -16,7 +16,7 @@ macro model_template(method_name, &blk)
       id
     end
 
-    Crumble::ModelTemplate.template {{blk}}
+    ToHtml.instance_template {{blk}}
   end
 
   def {{method_name.id}}
@@ -33,15 +33,5 @@ class Orma::Attribute(T)
 
   def to_html_attrs(_tag, attrs)
     attrs["data-crumble-#{model.name.underscore.gsub(/_/, "-").gsub(/::/, "--")}-#{name}"] = value.to_s
-  end
-end
-
-module Crumble
-  class ModelTemplate
-    macro template(&blk)
-      ToHtml.instance_template do
-        {{blk.body}}
-      end
-    end
   end
 end

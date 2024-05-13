@@ -13,7 +13,7 @@ class Orma::Record
         model.{{attr.id}}
       end
 
-      def model_template : Crumble::ModelTemplate
+      def model_template : IdentifiableView
         model.{{tpl.id}}
       end
 
@@ -63,7 +63,7 @@ class Orma::Record
         Template.new(self)
       end
 
-      def model_template : Crumble::ModelTemplate
+      def model_template : IdentifiableView
         model.{{tpl.id}}
       end
 

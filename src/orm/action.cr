@@ -15,7 +15,7 @@ module Crumble::ORM
     end
 
     abstract def model
-    abstract def model_template : Crumble::ModelTemplate
+    abstract def model_template : IdentifiableView
 
     def self.path_matcher : Regex
       @@path_matcher ||= /#{URI_PATH_PREFIX}\/#{model_class.name.gsub(/::/, "\\/").underscore}\/(\d+)\/#{action_name}/

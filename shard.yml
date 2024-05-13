@@ -6,6 +6,9 @@ dependencies:
   crumble:
     github: sbsoftware/crumble
     version: ">= 0.15"
+  to_html:
+    github: sbsoftware/to_html.cr
+    version: "< 2.0.0"
   crumble-stimulus:
     github: sbsoftware/crumble-stimulus
   orma:

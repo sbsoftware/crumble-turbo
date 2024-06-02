@@ -19,8 +19,8 @@ module IdentifiableView
     macro method_added(meth)
       {% verbatim do %}
         {% if meth.name.stringify == "to_html" && meth.args.size > 0 %}
-          def to_html(%io)
-            Wrapper.new(dom_id).to_html(%io) do |{{meth.args.first.name}}, indent_level|
+          def to_html(%io, _il = 0)
+            Wrapper.new(dom_id).to_html(%io, _il) do |{{meth.args.first.name}}, indent_level|
               {{ meth.body }}
             end
           end

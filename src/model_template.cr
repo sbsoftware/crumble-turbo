@@ -2,7 +2,7 @@ require "crumble"
 require "./identifiable_view"
 require "./turbo_stream"
 
-macro model_template(method_name, &blk)
+macro model_template(method_name, wrapper_attributes = nil, &blk)
   private class {{method_name.id.stringify.camelcase.id}}Template
     include IdentifiableView
 
@@ -15,6 +15,12 @@ macro model_template(method_name, &blk)
     def dom_id
       id
     end
+
+    {% if wrapper_attributes %}
+      def wrapper_attributes
+        {{wrapper_attributes}}
+      end
+    {% end %}
 
     ToHtml.instance_template {{blk}}
   end

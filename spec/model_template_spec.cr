@@ -1,12 +1,18 @@
 require "./spec_helper"
 
 module Orma::ModelTemplateSpec
+  class MyClass < CSS::CSSClass; end
+
   class Model < Orma::Record
     id_column id : Int64?
     column name : String?
 
     model_template :default_model_template do
-      strong { @model.name }
+      strong { name }
+    end
+
+    model_template :model_tpl_with_class, [MyClass] do
+      i { id }
     end
   end
 
@@ -31,6 +37,19 @@ module Orma::ModelTemplateSpec
       mdl.default_model_template.to_html.should eq(expected_html)
     end
 
+    it "can provide additional wrapper element attributes" do
+      mdl = Model.new
+      mdl.id = 50
+      expected_html = <<-HTML.squish
+      <div data-crumble-orma--model-template-spec--model-id="50" class="orma--model-template-spec--my-class">
+        <i>50</i>
+      </div>
+      HTML
+      mdl.model_tpl_with_class.to_html.should eq(expected_html)
+    end
+  end
+
+  describe "a model template" do
     it "returns a valid turbo stream template" do
       mdl = Model.new
       mdl.id = 66

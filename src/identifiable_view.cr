@@ -1,15 +1,20 @@
+require "./ext/nil"
 require "./turbo_stream"
 
 module IdentifiableView
   abstract def dom_id
 
-  class Wrapper(T)
-    getter dom_id : T
+  def wrapper_attributes
+    [] of Nil
+  end
 
-    def initialize(@dom_id); end
+  class Wrapper(T)
+    getter parent : T
+
+    def initialize(@parent); end
 
     ToHtml.instance_template do
-      div dom_id do
+      div(parent.dom_id, parent.wrapper_attributes) do
         yield
       end
     end
@@ -20,7 +25,7 @@ module IdentifiableView
       {% verbatim do %}
         {% if meth.name.stringify == "to_html" && meth.args.size > 0 %}
           def to_html(%io, _il = 0)
-            Wrapper.new(dom_id).to_html(%io, _il) do |{{meth.args.first.name}}, indent_level|
+            Wrapper.new(self).to_html(%io, _il) do |{{meth.args.first.name}}, indent_level|
               {{ meth.body }}
             end
           end

@@ -11,7 +11,7 @@ module Crumble::ORM
     private module ClassMethods
       abstract def action_name : String
       abstract def handle(ctx) : Bool
-      abstract def model_class : Orma::Record.class
+      abstract def model_class : ::Orma::Record.class
     end
 
     abstract def model

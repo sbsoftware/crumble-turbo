@@ -27,7 +27,7 @@ class Orma::Record
         {{name.id.stringify}}
       end
 
-      def self.model_class : Orma::Record.class
+      def self.model_class : ::Orma::Record.class
         {{@type.resolve}}
       end
     end
@@ -71,11 +71,11 @@ class Orma::Record
         {{name.id.stringify}}
       end
 
-      def self.model_class : Orma::Record.class
+      def self.model_class : ::Orma::Record.class
         {{@type.resolve}}
       end
 
-      def self.child_class : Orma::Record.class
+      def self.child_class : ::Orma::Record.class
         {{child_class.resolve}}
       end
 

@@ -82,6 +82,7 @@ describe "MyModel #add_child_action" do
 
     it "returns 400 when the before block returns false" do
       mock_ctx = MockContext.new(path: "/a/create_child_spec/my_model/2/add_child", body: URI::Params.encode({name: "Bla"}))
+      FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=2 LIMIT 1").set_result([{"id" => 2_i64} of String => DB::Any])
       CreateChildSpec::MyModel::AddChildAction.handle(mock_ctx)
       mock_ctx.response.status_code.should eq(400)
     end

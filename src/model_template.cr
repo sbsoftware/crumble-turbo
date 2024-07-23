@@ -6,7 +6,7 @@ macro model_template(method_name, wrapper_attributes = nil, &blk)
   private class {{method_name.id.stringify.camelcase.id}}Template
     include IdentifiableView
 
-    @model : {{@type}}
+    @model : ::{{@type}}
 
     forward_missing_to @model
 

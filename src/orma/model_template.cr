@@ -1,6 +1,6 @@
 require "crumble"
-require "./identifiable_view"
-require "./turbo_stream"
+require "../crumble/turbo/identifiable_view"
+require "../turbo_stream"
 
 macro model_template(method_name, wrapper_attributes = nil, &blk)
   private class {{method_name.id.stringify.camelcase.id}}Template

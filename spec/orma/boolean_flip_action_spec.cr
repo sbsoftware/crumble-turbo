@@ -1,7 +1,4 @@
-require "spec"
-require "crumble"
-require "../../src/orm/boolean_flip_action"
-require "../../src/orm/orm"
+require "../spec_helper"
 
 module BooleanFlipSpec
   class MyModel < Orma::Record
@@ -9,36 +6,26 @@ module BooleanFlipSpec
     column my_flag : Bool?
 
     boolean_flip_action :switch, :my_flag, :default_view do
-      before do |ctx, model|
+      before do
         model.id.value == 77
       end
     end
 
     model_template :default_view do
-      switch_action.template.to_html do
+      switch_action_template.to_html do
         strong id do
           "something"
         end
       end
     end
+
+    def self.db
+      FakeDB
+    end
   end
 end
 
 describe "the switch action" do
-  it "can be applied to set true" do
-    mdl = BooleanFlipSpec::MyModel.new
-    mdl.my_flag = false
-    mdl.switch_action.apply(true)
-    mdl.my_flag.value.should eq(true)
-  end
-
-  it "can be applied to set False" do
-    mdl = BooleanFlipSpec::MyModel.new
-    mdl.my_flag = true
-    mdl.switch_action.apply(false)
-    mdl.my_flag.value.should eq(false)
-  end
-
   it "provides a template" do
     mdl = BooleanFlipSpec::MyModel.new
     mdl.id = 77
@@ -46,7 +33,7 @@ describe "the switch action" do
     expected_html = <<-HTML.split(/\n\s*/).join
     <div data-crumble-boolean-flip-spec--my-model-id="77">
       <div data-controller="boolean-flip">
-        <form method="POST" action="/a/boolean_flip_spec/my_model/77/switch">
+        <form action="/a/boolean_flip_spec/my_model/77/switch" method="POST">
           <input type="hidden" name="value" value="false">
           <input data-boolean-flip-target="submitButton" type="submit">
         </form>
@@ -57,5 +44,17 @@ describe "the switch action" do
     </div>
     HTML
     mdl.default_view.to_html.should eq(expected_html)
+  end
+
+  describe "when handling a request" do
+    before_each { FakeDB.reset }
+    after_each { FakeDB.assert_empty! }
+
+    it "flips the attribute when the before block returns true" do
+      ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/boolean_flip_spec/my_model/77/switch", body: URI::Params.encode({value: "true"}))
+      FakeDB.expect("SELECT * FROM boolean_flip_spec_my_models WHERE id=77 LIMIT 1").set_result([{"id" => 77_i64, "my_flag" => false} of String => DB::Any])
+      FakeDB.expect("UPDATE boolean_flip_spec_my_models SET my_flag=TRUE WHERE id=77")
+      BooleanFlipSpec::MyModel::SwitchAction.handle(ctx)
+    end
   end
 end

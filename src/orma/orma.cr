@@ -1,16 +1,19 @@
+require "./model_template"
 require "./boolean_flip_action"
 require "./create_child_action"
-require "./action_registry"
+require "../crumble/turbo/action_registry"
 
 class Orma::Record
   macro boolean_flip_action(name, attr, tpl, &blk)
-    class {{name.capitalize.id}}Action < Crumble::ORM::BooleanFlipAction
-      getter model : {{@type}}
-
-      def initialize(@model); end
+    class {{name.capitalize.id}}Action < ::Orma::BooleanFlipAction
+      @model : {{@type}}?
 
       def attribute
         model.{{attr.id}}
+      end
+
+      def model
+        @model ||= self.class.model_class.find(model_id)
       end
 
       def model_template : IdentifiableView
@@ -18,7 +21,7 @@ class Orma::Record
       end
 
       {% if blk.is_a?(Block) && blk.body.is_a?(Call) && blk.body.name.id == "before".id %}
-      def before_action({{blk.body.block.args.splat}})
+      def before_action
         {{blk.body.block.body}}
       end
       {% end %}
@@ -32,26 +35,24 @@ class Orma::Record
       end
     end
 
-    def {{name.id}}_action
-      {{name.capitalize.id}}Action.new(self)
+    def {{name.id}}_action_template
+      {{name.capitalize.id}}Action::Template.new({{name.capitalize.id}}Action.uri_path(self.id.value), self.{{attr.id}}.value || false)
     end
 
-    Crumble::ORM::ActionRegistry.add({{@type.name}}::{{name.capitalize.id}}Action)
+    Crumble::Turbo::ActionRegistry.add({{@type.name}}::{{name.capitalize.id}}Action)
   end
 
   macro create_child_action(name, child_class, parent_id_attr, tpl, &blk)
-    class {{name.camelcase.id}}Action < Crumble::ORM::CreateChildAction
-      getter model : {{@type}}
+    class {{name.camelcase.id}}Action < ::Orma::CreateChildAction
+      @model : {{@type}}?
 
-      def initialize(@model); end
+      class Template
+        getter uri_path : String
 
-      private class Template
-        getter parent : Crumble::ORM::CreateChildAction
-
-        def initialize(@parent); end
+        def initialize(@uri_path); end
 
         ToHtml.instance_template do
-          parent.form_template.to_html do
+          FormTemplate.new(uri_path).to_html do
             {% if blk.body.is_a?(Expressions) && blk.body.expressions.find { |e| e.is_a?(Call) && e.name.id == "form".id } %}
               {{blk.body.expressions.find { |e| e.is_a?(Call) && e.name.id == "form".id }.block.body}}
             {% end %}
@@ -59,8 +60,8 @@ class Orma::Record
         end
       end
 
-      def template
-        Template.new(self)
+      def model
+        @model ||= self.class.model_class.find(model_id)
       end
 
       def model_template : IdentifiableView
@@ -80,7 +81,7 @@ class Orma::Record
       end
 
       {% if blk.body.is_a?(Expressions) && blk.body.expressions.find { |e| e.is_a?(Call) && e.name.id == "before".id } %}
-      def before_action({{blk.body.expressions.find { |e| e.is_a?(Call) && e.name.id == "before".id }.block.args.splat}})
+      def before_action
         {{blk.body.expressions.find { |e| e.is_a?(Call) && e.name.id == "before".id }.block.body}}
       end
       {% end %}
@@ -102,10 +103,10 @@ class Orma::Record
       end
     end
 
-    def {{name.id}}_action
-      {{name.camelcase.id}}Action.new(self)
+    def {{name.id}}_action_template
+      {{name.camelcase.id}}Action::Template.new({{name.camelcase.id}}Action.uri_path(self.id.value))
     end
 
-    Crumble::ORM::ActionRegistry.add({{@type.name}}::{{name.camelcase.id}}Action)
+    Crumble::Turbo::ActionRegistry.add({{@type.name}}::{{name.camelcase.id}}Action)
   end
 end

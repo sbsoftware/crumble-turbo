@@ -1,16 +1,7 @@
+require "../spec_helper"
 require "uri"
 require "orma/spec/fake_db"
 require "crumble/spec/test_request_context"
-require "../../src/crumble-turbo"
-
-class TestRequest
-  def initialize(id = nil, resource = "/", method = "GET", headers = nil, remote_address : String = "127.0.0.1", body = nil)
-    @id = id if id
-    @remote_address = Socket::IPAddress.new(remote_address, 80)
-    body_io = IO::Memory.new.tap { |io| io << body; io.rewind }
-    super(method: method, resource: resource, headers: headers, internal: nil, body: body_io)
-  end
-end
 
 module CreateChildSpec
   class ChildModel < Orma::Record
@@ -60,14 +51,7 @@ module CreateChildSpec
   end
 end
 
-# TODO: Fix this in crumble
-class ExpectedQuery
-  def set_result(data : Array(Hash(String, DB::Any)))
-    @result = FakeResult.new(data)
-  end
-end
-
-describe "MyModel #add_child_action" do
+describe "MyModel #add_child_action_template" do
   it "has a template" do
     my_model = CreateChildSpec::MyModel.new
     my_model.id = 7
@@ -75,7 +59,7 @@ describe "MyModel #add_child_action" do
     <form action="/a/create_child_spec/my_model/7/add_child" method="POST"><input type="text" name="name"><input type="submit" name="Add Child"></form>
     HTML
 
-    my_model.add_child_action.template.to_html.should eq(expected_html)
+    my_model.add_child_action_template.to_html.should eq(expected_html)
   end
 
   context "when handling a request" do
@@ -83,21 +67,21 @@ describe "MyModel #add_child_action" do
     after_each { FakeDB.assert_empty! }
 
     it "creates a new ChildModel when the before block returns true" do
-      mock_ctx = Crumble::Server::TestRequestContext.new(resource: "/a/create_child_spec/my_model/7/add_child", body: URI::Params.encode({name: "Bla"}))
+      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/7/add_child", body: URI::Params.encode({name: "Bla"}))
       FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=7 LIMIT 1").set_result([{"id" => 7_i64} of String => DB::Any])
       FakeDB.expect("INSERT INTO create_child_spec_child_models(my_model_id, name) VALUES (7, 'Bla')")
       CreateChildSpec::MyModel::AddChildAction.handle(mock_ctx)
     end
 
     it "returns 400 when the before block returns false" do
-      mock_ctx = Crumble::Server::TestRequestContext.new(resource: "/a/create_child_spec/my_model/2/add_child", body: URI::Params.encode({name: "Bla"}))
+      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/2/add_child", body: URI::Params.encode({name: "Bla"}))
       FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=2 LIMIT 1").set_result([{"id" => 2_i64} of String => DB::Any])
       CreateChildSpec::MyModel::AddChildAction.handle(mock_ctx)
       mock_ctx.response.status_code.should eq(400)
     end
 
     it "creates a new ChildModel when there is no before block" do
-      mock_ctx = Crumble::Server::TestRequestContext.new(resource: "/a/create_child_spec/my_model/1/always_add_child", body: URI::Params.encode({name: "Bla"}))
+      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/1/always_add_child", body: URI::Params.encode({name: "Bla"}))
       FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=1 LIMIT 1").set_result([{"id" => 1_i64} of String => DB::Any])
       FakeDB.expect("INSERT INTO create_child_spec_child_models(my_model_id, name) VALUES (1, 'Bla')")
       CreateChildSpec::MyModel::AlwaysAddChildAction.handle(mock_ctx)

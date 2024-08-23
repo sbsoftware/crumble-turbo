@@ -1,6 +1,6 @@
 require "./action"
 
-module Crumble::ORM
+module Crumble::Turbo
   class ActionRegistry
     ACTION_CLASSES = [] of Action.class
 

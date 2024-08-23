@@ -1,4 +1,4 @@
-require "./spec_helper"
+require "../spec_helper"
 
 module Orma::ModelTemplateSpec
   class MyClass < CSS::CSSClass; end

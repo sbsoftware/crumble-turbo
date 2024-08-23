@@ -1,5 +1,5 @@
-require "./ext/nil"
-require "./turbo_stream"
+require "../../ext/nil"
+require "../../turbo_stream"
 
 module IdentifiableView
   abstract def dom_id

@@ -2,8 +2,7 @@ require "crumble"
 require "orma"
 
 require "./turbo_stream"
-require "./model_template"
-require "./orm"
+require "./orma"
 require "./resource"
 require "./turbo_style"
 

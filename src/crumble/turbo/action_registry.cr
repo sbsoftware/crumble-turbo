@@ -19,4 +19,4 @@ module Crumble::Turbo
   end
 end
 
-Crumble::Server::RootRequestHandler.add_request_handler(Crumble::ORM::ActionRegistry)
+Crumble::Server::RootRequestHandler.add_request_handler(Crumble::Turbo::ActionRegistry)

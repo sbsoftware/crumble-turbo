@@ -99,6 +99,11 @@ class Orma::Record
             end
           {% end %}
         end
+        {% if blk.body.is_a?(Expressions) && blk.body.expressions.find { |e| e.is_a?(Call) && e.name.id == "context_attributes".id } %}
+          {% for named_arg in blk.body.expressions.find { |e| e.is_a?(Call) && e.name.id == "context_attributes".id }.named_args %}
+            child.{{named_arg.name.id}} = ctx.{{named_arg.value.id}}
+          {% end %}
+        {% end %}
         child
       end
     end

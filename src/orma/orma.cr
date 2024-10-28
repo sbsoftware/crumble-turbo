@@ -8,8 +8,8 @@ class Orma::Record
     class {{name.capitalize.id}}Action < ::Orma::BooleanFlipAction
       @model : {{@type}}?
 
-      def attribute
-        model.{{attr.id}}
+      def assign_attribute(new_val)
+        model.{{attr.id}} = new_val
       end
 
       def model

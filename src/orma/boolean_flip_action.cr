@@ -3,7 +3,7 @@ require "../stimulus_controllers/boolean_flip_controller"
 
 module Orma
   abstract class BooleanFlipAction < ModelAction
-    abstract def attribute
+    abstract def assign_attribute(new_val)
 
     delegate :to_s, to: template
 
@@ -35,7 +35,7 @@ module Orma
       end
 
       unless new_val.nil?
-        attribute.value = new_val
+        assign_attribute(new_val)
       end
       model.save
 

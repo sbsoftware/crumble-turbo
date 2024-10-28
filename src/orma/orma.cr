@@ -36,7 +36,9 @@ class Orma::Record
     end
 
     def {{name.id}}_action_template
-      {{name.capitalize.id}}Action::Template.new({{name.capitalize.id}}Action.uri_path(self.id.value), self.{{attr.id}}.value || false)
+      raise RuntimeError.new("BooleanFlipAction only works for persisted records!") unless id = self.id
+
+      {{name.capitalize.id}}Action::Template.new({{name.capitalize.id}}Action.uri_path(id.value), self.{{attr.id}}.try(&.value) || false)
     end
 
     Crumble::Turbo::ActionRegistry.add({{@type.name}}::{{name.capitalize.id}}Action)
@@ -109,7 +111,9 @@ class Orma::Record
     end
 
     def {{name.id}}_action_template
-      {{name.camelcase.id}}Action::Template.new({{name.camelcase.id}}Action.uri_path(self.id.value))
+      raise RuntimeError.new("CreateChildAction only works for persisted records!") unless id = self.id
+
+      {{name.camelcase.id}}Action::Template.new({{name.camelcase.id}}Action.uri_path(id.value))
     end
 
     Crumble::Turbo::ActionRegistry.add({{@type.name}}::{{name.camelcase.id}}Action)

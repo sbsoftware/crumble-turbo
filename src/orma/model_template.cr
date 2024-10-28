@@ -13,7 +13,11 @@ macro model_template(method_name, wrapper_attributes = nil, &blk)
     def initialize(@model); end
 
     def dom_id
-      id
+      if id = self.id
+        id
+      else
+        raise ArgumentError.new("Cannot render model template for unpersisted record")
+      end
     end
 
     {% if wrapper_attributes %}

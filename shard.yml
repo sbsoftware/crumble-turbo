@@ -13,3 +13,4 @@ dependencies:
     github: sbsoftware/crumble-stimulus
   orma:
     github: sbsoftware/orma
+    version: "~> 0.5.1"

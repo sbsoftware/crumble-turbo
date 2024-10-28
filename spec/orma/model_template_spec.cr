@@ -29,7 +29,7 @@ module Orma::ModelTemplateSpec
   describe "a model defining a model template" do
     it "has a method returning a template with a model template wrapper" do
       mdl = Model.new
-      mdl.id = 65
+      mdl.id = 65_i64
       mdl.name = "Pavel"
       expected_html = <<-HTML
       <div data-crumble-orma--model-template-spec--model-id="65"><strong>Pavel</strong></div>
@@ -39,7 +39,7 @@ module Orma::ModelTemplateSpec
 
     it "can provide additional wrapper element attributes" do
       mdl = Model.new
-      mdl.id = 50
+      mdl.id = 50_i64
       expected_html = <<-HTML.squish
       <div data-crumble-orma--model-template-spec--model-id="50" class="orma--model-template-spec--my-class">
         <i>50</i>
@@ -52,7 +52,7 @@ module Orma::ModelTemplateSpec
   describe "a model template" do
     it "returns a valid turbo stream template" do
       mdl = Model.new
-      mdl.id = 66
+      mdl.id = 66_i64
       mdl.name = "Bronko"
 
       expected_html = <<-HTML
@@ -64,7 +64,7 @@ module Orma::ModelTemplateSpec
 
     it "can be used within a layout" do
       mdl = Model.new
-      mdl.id = 67
+      mdl.id = 67_i64
       mdl.name = "Woody"
 
       expected_html = <<-HTML.squish

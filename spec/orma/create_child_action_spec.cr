@@ -20,7 +20,7 @@ module CreateChildSpec
 
     create_child_action :add_child, ChildModel, my_model_id, default_view do
       before do |ctx, model|
-        model.id.value == 7
+        model.id == 7_i64
       end
 
       form do
@@ -57,7 +57,7 @@ end
 describe "MyModel #add_child_action_template" do
   it "has a template" do
     my_model = CreateChildSpec::MyModel.new
-    my_model.id = 7
+    my_model.id = 7_i64
     expected_html = <<-HTML
     <form action="/a/create_child_spec/my_model/7/add_child" method="POST"><input type="text" name="name"><input type="submit" name="Add Child"></form>
     HTML

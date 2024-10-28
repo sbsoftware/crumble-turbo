@@ -1,4 +1,5 @@
 require "../spec_helper"
+require "crumble/spec/test_request_context"
 
 module BooleanFlipSpec
   class MyModel < Orma::Record
@@ -7,7 +8,7 @@ module BooleanFlipSpec
 
     boolean_flip_action :switch, :my_flag, :default_view do
       before do
-        model.id.value == 77
+        model.id == 77_i64
       end
     end
 
@@ -28,7 +29,7 @@ end
 describe "the switch action" do
   it "provides a template" do
     mdl = BooleanFlipSpec::MyModel.new
-    mdl.id = 77
+    mdl.id = 77_i64
     mdl.my_flag = true
     expected_html = <<-HTML.split(/\n\s*/).join
     <div data-crumble-boolean-flip-spec--my-model-id="77">

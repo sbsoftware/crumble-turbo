@@ -23,7 +23,7 @@ module Orma
     end
 
     def model_id
-      path_match[1]
+      path_match[1].to_i
     end
   end
 end

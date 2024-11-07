@@ -27,7 +27,6 @@ module Crumble::Turbo::StaticActionSpec
 
   describe "when handling a request" do
     it "responds with a turbo stream replacing the static template" do
-      puts MyAction.uri_path
       res_body = String.build do |str_io|
         ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: MyAction.uri_path, response_io: str_io)
         MyAction.handle(ctx).should be_true

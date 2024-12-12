@@ -56,7 +56,7 @@ module Crumble::Turbo
     def before_action_halted?
       return false unless responds_to?(:before_action)
 
-      before_action_res = self.before_action
+      before_action_res : Bool | Int32 = self.before_action
       return false if before_action_res == true
 
       if before_action_res == false

@@ -32,7 +32,7 @@ describe "the switch action" do
     mdl.id = 77_i64
     mdl.my_flag = true
     expected_html = <<-HTML.split(/\n\s*/).join
-    <div data-crumble-boolean-flip-spec--my-model-id="77">
+    <div data-model-template-id="BooleanFlipSpec::MyModel#77-default_view">
       <div data-controller="boolean-flip">
         <form action="/a/boolean_flip_spec/my_model/77/switch" method="POST">
           <input type="hidden" name="value" value="false">

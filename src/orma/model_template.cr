@@ -1,6 +1,7 @@
 require "crumble"
 require "../crumble/turbo/identifiable_view"
 require "../turbo_stream"
+require "./model_template_id"
 
 macro model_template(method_name, wrapper_attributes = nil, &blk)
   private class {{method_name.id.stringify.camelcase.id}}Template
@@ -14,7 +15,7 @@ macro model_template(method_name, wrapper_attributes = nil, &blk)
 
     def dom_id
       if id = self.id
-        id
+        Orma::ModelTemplateId.new({{@type.name.stringify}}, id.value, {{method_name.id.stringify}})
       else
         raise ArgumentError.new("Cannot render model template for unpersisted record")
       end

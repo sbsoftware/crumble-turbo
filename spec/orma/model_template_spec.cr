@@ -32,7 +32,7 @@ module Orma::ModelTemplateSpec
       mdl.id = 65_i64
       mdl.name = "Pavel"
       expected_html = <<-HTML
-      <div data-crumble-orma--model-template-spec--model-id="65"><strong>Pavel</strong></div>
+      <div data-model-template-id="Orma::ModelTemplateSpec::Model#65-default_model_template"><strong>Pavel</strong></div>
       HTML
       mdl.default_model_template.to_html.should eq(expected_html)
     end
@@ -41,7 +41,7 @@ module Orma::ModelTemplateSpec
       mdl = Model.new
       mdl.id = 50_i64
       expected_html = <<-HTML.squish
-      <div data-crumble-orma--model-template-spec--model-id="50" class="orma--model-template-spec--my-class">
+      <div data-model-template-id="Orma::ModelTemplateSpec::Model#50-model_tpl_with_class" class="orma--model-template-spec--my-class">
         <i>50</i>
       </div>
       HTML
@@ -56,7 +56,7 @@ module Orma::ModelTemplateSpec
       mdl.name = "Bronko"
 
       expected_html = <<-HTML
-      <turbo-stream action="replace" targets="[data-crumble-orma--model-template-spec--model-id='66']"><template><div data-crumble-orma--model-template-spec--model-id="66"><strong>Bronko</strong></div></template></turbo-stream>
+      <turbo-stream action="replace" targets="[data-model-template-id='Orma::ModelTemplateSpec::Model#66-default_model_template']"><template><div data-model-template-id="Orma::ModelTemplateSpec::Model#66-default_model_template"><strong>Bronko</strong></div></template></turbo-stream>
       HTML
 
       mdl.default_model_template.turbo_stream.to_html.should eq(expected_html)
@@ -70,7 +70,7 @@ module Orma::ModelTemplateSpec
       expected_html = <<-HTML.squish
       <html>
         <body>
-          <div data-crumble-orma--model-template-spec--model-id="67"><strong>Woody</strong></div>
+          <div data-model-template-id="Orma::ModelTemplateSpec::Model#67-default_model_template"><strong>Woody</strong></div>
         </body>
       </html>
       HTML

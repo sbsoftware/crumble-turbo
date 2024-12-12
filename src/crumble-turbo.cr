@@ -1,4 +1,5 @@
 require "crumble"
+require "crumble-stimulus"
 require "orma"
 
 require "./turbo_stream"

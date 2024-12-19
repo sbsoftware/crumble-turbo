@@ -2,6 +2,7 @@ require "crumble"
 require "../crumble/turbo/identifiable_view"
 require "../turbo_stream"
 require "./model_template_id"
+require "../stimulus_controllers/model_template_refresh_controller"
 
 macro model_template(method_name, wrapper_attributes = nil, &blk)
   private class {{method_name.id.stringify.camelcase.id}}Template
@@ -21,11 +22,12 @@ macro model_template(method_name, wrapper_attributes = nil, &blk)
       end
     end
 
-    {% if wrapper_attributes %}
-      def wrapper_attributes
-        {{wrapper_attributes}}
-      end
-    {% end %}
+    def wrapper_attributes
+      arr = [Crumble::Turbo::ModelTemplateRefreshController.model_template_target]
+      {% if wrapper_attributes %}
+        arr + {{wrapper_attributes}}
+      {% end %}
+    end
 
     ToHtml.instance_template {{blk}}
   end

@@ -8,7 +8,7 @@ module Orma
       FormTemplate.new(uri_path)
     end
 
-    def controller
+    def model_action_controller
       child = child_instance(ctx.request.body.try(&.gets_to_end) || "")
       child.save
 

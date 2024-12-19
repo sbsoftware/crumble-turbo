@@ -26,7 +26,7 @@ module Orma
       end
     end
 
-    def controller
+    def model_action_controller
       new_val = nil
       request_params(ctx.request.body) do |name, value|
         if name == "value"
@@ -40,8 +40,6 @@ module Orma
       model.save
 
       model_template.turbo_stream.to_html(ctx.response)
-
-      true
     end
 
     def request_params(req_body)

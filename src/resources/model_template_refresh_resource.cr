@@ -7,6 +7,7 @@ module Crumble
         ctx.response.content_type = "text/event-stream"
         ctx.response.headers["Cache-Control"] = "no-cache"
         ctx.response.headers["Connection"] = "keep-alive"
+        ctx.response.headers["X-Accel-Buffering"] = "no"
 
         ctx.response.upgrade do |io|
           channel = ModelTemplateRefreshService.subscribe(ctx.session.id.to_s)

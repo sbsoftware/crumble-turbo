@@ -19,13 +19,15 @@ module Crumble
             view.turbo_stream.to_html(io)
             io << "\n\n"
             io.flush
+          rescue e : Exception
+            ModelTemplateRefreshService.unsubscribe(ctx.session.id.to_s)
+
+            break
           end
 
         ensure
           io.close
         end
-      rescue e : Exception
-        ModelTemplateRefreshService.unsubscribe(ctx.session.id.to_s)
       end
 
       def create

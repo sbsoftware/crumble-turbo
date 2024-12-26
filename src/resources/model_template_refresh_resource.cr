@@ -10,6 +10,9 @@ module Crumble
         ctx.response.headers["X-Accel-Buffering"] = "no"
 
         ctx.response.upgrade do |io|
+          io.as(TCPSocket).blocking = true
+          io.as(TCPSocket).sync = true
+
           channel = ModelTemplateRefreshService.subscribe(ctx.session.id.to_s)
 
           loop do

@@ -20,6 +20,9 @@ module Crumble
             io << "\n\n"
             io.flush
           end
+
+        ensure
+          io.close
         end
       rescue e : Exception
         ModelTemplateRefreshService.unsubscribe(ctx.session.id.to_s)

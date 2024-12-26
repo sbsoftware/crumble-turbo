@@ -9,7 +9,10 @@ module Crumble
       end
 
       def self.unsubscribe(id : String) : Nil
-        @@channels.delete(id)
+        if channel = @@channels[id]?
+          channel.close
+          @@channels.delete(id)
+        end
       end
 
       def self.register(id : String, model_template_id : String)
@@ -20,7 +23,7 @@ module Crumble
         return unless ids = @@model_template_id_channels[model_template.dom_id.attr_value]?
 
         ids.each do |id|
-          if channel = @@channels[id]?
+          if (channel = @@channels[id]?) && !channel.closed?
             channel.send(model_template)
           else
             ids.delete(id)

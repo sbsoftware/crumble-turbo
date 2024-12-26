@@ -5,7 +5,12 @@ module Crumble
       @@model_template_id_channels = {} of String => Set(String)
 
       def self.subscribe(id : String) : Channel(IdentifiableView)
-        @@channels[id] ||= Channel(IdentifiableView).new
+
+        if existing_channel = @@channels[id]?
+          existing_channel.close
+        end
+
+        @@channels[id] = Channel(IdentifiableView).new
       end
 
       def self.unsubscribe(id : String) : Nil

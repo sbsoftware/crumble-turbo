@@ -19,12 +19,13 @@ module Crumble
             view.turbo_stream.to_html(io)
             io << "\n\n"
             io.flush
-          rescue e : Exception
+          rescue e : IO::Error
             ModelTemplateRefreshService.unsubscribe(ctx.session.id.to_s)
 
             break
           end
 
+        rescue Channel::ClosedError
         ensure
           io.close
         end

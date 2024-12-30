@@ -36,6 +36,10 @@ module Crumble
             end
           else
             ids.delete(id)
+
+            if channel && channel.closed?
+              @@channels.delete(id)
+            end
           end
         end
       end

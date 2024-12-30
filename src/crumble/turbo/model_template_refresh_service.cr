@@ -29,7 +29,11 @@ module Crumble
 
         ids.each do |id|
           if (channel = @@channels[id]?) && !channel.closed?
-            channel.send(model_template)
+            spawn do
+              channel.send(model_template)
+            rescue e : Channel::ClosedError
+              # discard
+            end
           else
             ids.delete(id)
           end

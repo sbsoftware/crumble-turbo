@@ -9,11 +9,11 @@ module Crumble
         ctx.response.headers["Connection"] = "keep-alive"
         ctx.response.headers["X-Accel-Buffering"] = "no"
 
+        channel = ModelTemplateRefreshService.subscribe(ctx.session.id.to_s)
+
         ctx.response.upgrade do |io|
           io.as(TCPSocket).blocking = true
           io.as(TCPSocket).sync = true
-
-          channel = ModelTemplateRefreshService.subscribe(ctx.session.id.to_s)
 
           loop do
             view = channel.receive
@@ -30,6 +30,7 @@ module Crumble
 
         rescue Channel::ClosedError
         ensure
+          channel.close
           io.close
         end
       end

@@ -15,6 +15,10 @@ module Crumble
         end
       end
 
+      js_method :disconnect do
+        this.evt_source.close._call
+      end
+
       js_method :register_model_templates do |force|
         unless this.model_template_ids
           this.model_template_ids = [] of String

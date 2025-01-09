@@ -4,6 +4,40 @@ require "./create_child_action"
 require "../crumble/turbo/action_registry"
 
 class Orma::Record
+  macro model_action(name, refreshed_model_template, &blk)
+    class {{name.id.stringify.camelcase.id}}Action < Orma::ModelAction
+      @model : {{@type}}?
+
+      def self.action_name : String
+        {{name.id.stringify}}
+      end
+
+      def self.action_template(model)
+        ::Orma::ModelAction::GenericModelActionTemplate.new(self.uri_path(model.id))
+      end
+
+      def self.model_class : Orma::Record.class
+        {{@type.resolve}}
+      end
+
+      def model
+        @model ||= self.class.model_class.find(model_id)
+      end
+
+      def model_template : IdentifiableView
+        model.{{refreshed_model_template}}
+      end
+
+      {{blk.body}}
+    end
+
+    def {{name.id.stringify.underscore.id}}_action_template
+      {{name.id.stringify.camelcase.id}}Action.action_template(self)
+    end
+
+    Crumble::Turbo::ActionRegistry.add({{@type.name}}::{{name.id.stringify.camelcase.id}}Action)
+  end
+
   macro boolean_flip_action(name, attr, tpl, &blk)
     class {{name.capitalize.id}}Action < ::Orma::BooleanFlipAction
       @model : {{@type}}?

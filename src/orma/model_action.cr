@@ -10,6 +10,7 @@ module Orma
 
     private module ClassMethods
       abstract def model_class : ::Orma::Record.class
+      abstract def action_template(model)
     end
 
     abstract def model
@@ -34,5 +35,52 @@ module Orma
     end
 
     abstract def model_action_controller
+
+    macro controller(&blk)
+      def model_action_controller
+        {{blk.body}}
+      end
+    end
+
+    stimulus_controller GenericModelActionController do
+      targets :submit
+
+      action :submit do
+        this.submitTarget.click._call
+      end
+    end
+
+    class GenericModelActionTemplate
+      getter action_path : String
+
+      def initialize(@action_path); end
+
+      class Form < CSS::CSSClass; end
+      class Inner < CSS::CSSClass; end
+
+      class Style < CSS::Stylesheet
+        rules do
+          rule Form do
+            display None
+          end
+
+          rule Inner do
+            width 100.percent
+            height 100.percent
+          end
+        end
+      end
+
+      ToHtml.instance_template do
+        div GenericModelActionController do
+          form Form, action: action_path, method: "POST" do
+            input GenericModelActionController.submit_target, type: :submit
+          end
+          div Inner, GenericModelActionController.submit_action("click") do
+            yield
+          end
+        end
+      end
+    end
   end
 end

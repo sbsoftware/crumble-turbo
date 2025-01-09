@@ -17,6 +17,12 @@ module Crumble::Turbo
 
     abstract def controller
 
+    macro controller(&blk)
+      def controller
+        {{blk.body}}
+      end
+    end
+
     private class FormTemplate
       getter uri_path : String
 

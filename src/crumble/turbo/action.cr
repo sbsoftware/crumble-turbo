@@ -15,6 +15,12 @@ module Crumble::Turbo
       abstract def action_name : String
     end
 
+    macro before(&blk)
+      def before_action
+        {{blk.body}}
+      end
+    end
+
     abstract def controller
 
     macro controller(&blk)
@@ -23,13 +29,50 @@ module Crumble::Turbo
       end
     end
 
-    private class FormTemplate
-      getter uri_path : String
+    class FormTemplate
+      struct Field
+        enum Type
+          Text
+          Hidden
+          Submit
 
-      def initialize(@uri_path); end
+          # TODO: Check why this doesn't work with the #to_s(io : IO) overload
+          def to_s
+            super.underscore.gsub("_", "-")
+          end
+        end
+
+        getter type : Type
+        getter name : String
+        getter value : String
+
+        def initialize(@type, @name, @value); end
+      end
+
+      getter uri_path : String
+      getter fields : Array(Field)
+
+      def initialize(@uri_path, @fields); end
+
+      def initialize(@uri_path)
+        @fields = [] of Field
+      end
+
+      class Form < CSS::CSSClass; end
+
+      class Style < CSS::Stylesheet
+        rules do
+          rule Form do
+            display None
+          end
+        end
+      end
 
       ToHtml.instance_template do
-        form action: uri_path, method: "POST" do
+        form Form, action: uri_path, method: "POST" do
+          fields.each do |field|
+            input type: field.type, name: field.name, value: field.value
+          end
           yield
         end
       end

@@ -30,7 +30,7 @@ module Orma::ModelActionSpec
       my_model = Orma::ModelActionSpec::MyModel.new(id: 5_i64)
       expected = <<-HTML.squish
       <div data-controller="orma--model-action--generic-model-action">
-        <form class="orma--model-action--generic-model-action-template--form" action="/a/orma/model_action_spec/my_model/5/inc_some_number" method="POST">
+        <form class="crumble--turbo--action--form-template--form" action="/a/orma/model_action_spec/my_model/5/inc_some_number" method="POST">
           <input data-orma--model-action--generic-model-action-target="submit" type="submit">
         </form>
         <div class="orma--model-action--generic-model-action-template--inner" data-action="click->orma--model-action--generic-model-action#submit">

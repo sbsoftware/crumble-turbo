@@ -31,6 +31,7 @@ module Orma
     def controller
       model_action_controller
 
+      model_template.turbo_stream.to_html(ctx.response)
       Crumble::Turbo::ModelTemplateRefreshService.notify(model_template)
     end
 
@@ -51,19 +52,20 @@ module Orma
     end
 
     class GenericModelActionTemplate
-      getter action_path : String
+      getter form_template
 
-      def initialize(@action_path); end
+      def initialize(action_path)
+        @form_template = FormTemplate.new(action_path)
+      end
 
-      class Form < CSS::CSSClass; end
+      def initialize(action_path, fields)
+        @form_template = FormTemplate.new(action_path, fields)
+      end
+
       class Inner < CSS::CSSClass; end
 
       class Style < CSS::Stylesheet
         rules do
-          rule Form do
-            display None
-          end
-
           rule Inner do
             width 100.percent
             height 100.percent
@@ -73,7 +75,7 @@ module Orma
 
       ToHtml.instance_template do
         div GenericModelActionController do
-          form Form, action: action_path, method: "POST" do
+          form_template.to_html do
             input GenericModelActionController.submit_target, type: :submit
           end
           div Inner, GenericModelActionController.submit_action("click") do

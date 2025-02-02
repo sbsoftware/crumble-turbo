@@ -4,7 +4,7 @@ require "crumble/spec/test_request_context"
 module BooleanFlipSpec
   class MyModel < Orma::Record
     id_column id : Int64?
-    column my_flag : Bool?
+    column my_flag : Bool
 
     boolean_flip_action :switch, :my_flag, :default_view do
       before do
@@ -30,12 +30,11 @@ end
 
 describe "the switch action" do
   it "provides a template" do
-    mdl = BooleanFlipSpec::MyModel.new
-    mdl.id = 77_i64
-    mdl.my_flag = true
+    mdl = BooleanFlipSpec::MyModel.new(id: 77_i64, my_flag: true)
+
     expected_html = <<-HTML.split(/\n\s*/).join
     <div data-controller="orma--model-action--generic-model-action">
-      <form class="crumble--turbo--action--form-template--form" action="/a/boolean_flip_spec/my_model/77/switch" method="POST">
+      <form class="crumble--turbo--action--form-template--hidden" action="/a/boolean_flip_spec/my_model/77/switch" method="POST">
         <input type="hidden" name="value" value="false">
         <input data-orma--model-action--generic-model-action-target="submit" type="submit">
       </form>
@@ -62,12 +61,11 @@ end
 
 describe "the always_switch action" do
   it "provides a template" do
-    mdl = BooleanFlipSpec::MyModel.new
-    mdl.id = 71_i64
-    mdl.my_flag = true
+    mdl = BooleanFlipSpec::MyModel.new(id: 71_i64, my_flag: true)
+
     expected_html = <<-HTML.split(/\n\s*/).join
     <div data-controller="orma--model-action--generic-model-action">
-      <form class="crumble--turbo--action--form-template--form" action="/a/boolean_flip_spec/my_model/71/always_switch" method="POST">
+      <form class="crumble--turbo--action--form-template--hidden" action="/a/boolean_flip_spec/my_model/71/always_switch" method="POST">
         <input type="hidden" name="value" value="false">
         <input data-orma--model-action--generic-model-action-target="submit" type="submit">
       </form>

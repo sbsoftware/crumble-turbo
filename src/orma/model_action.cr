@@ -54,11 +54,11 @@ module Orma
     class GenericModelActionTemplate
       getter form_template
 
-      def initialize(action_path, hidden)
+      def initialize(action_path, *, hidden = true)
         @form_template = FormTemplate.new(action_path, hidden: hidden)
       end
 
-      def initialize(action_path, fields, hidden)
+      def initialize(action_path, fields, *, hidden = true)
         @form_template = FormTemplate.new(action_path, fields, hidden: hidden)
       end
 

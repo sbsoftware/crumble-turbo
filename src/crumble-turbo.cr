@@ -1,8 +1,8 @@
-require "./ext/**"
-
 require "crumble"
 require "crumble-stimulus"
 require "orma"
+
+require "./ext/**"
 
 require "./turbo_stream"
 require "./orma"

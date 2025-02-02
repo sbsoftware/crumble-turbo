@@ -54,12 +54,12 @@ module Orma
     class GenericModelActionTemplate
       getter form_template
 
-      def initialize(action_path)
-        @form_template = FormTemplate.new(action_path)
+      def initialize(action_path, hidden)
+        @form_template = FormTemplate.new(action_path, hidden: hidden)
       end
 
-      def initialize(action_path, fields)
-        @form_template = FormTemplate.new(action_path, fields)
+      def initialize(action_path, fields, hidden)
+        @form_template = FormTemplate.new(action_path, fields, hidden: hidden)
       end
 
       class Inner < CSS::CSSClass; end

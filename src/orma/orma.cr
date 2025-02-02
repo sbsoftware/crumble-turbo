@@ -65,7 +65,8 @@ class Orma::Record
               name: "value",
               value: (!model.{{attr.id}}.value).to_s
             )
-          ]
+          ],
+          hidden: true
         )
       end
 

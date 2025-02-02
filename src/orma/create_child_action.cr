@@ -79,7 +79,7 @@ module Orma
     macro form(&blk)
       class Template < Template
         ToHtml.instance_template do
-          FormTemplate.new(uri_path).to_html do
+          FormTemplate.new(uri_path, hidden: false).to_html do
             {{blk.body}}
           end
         end

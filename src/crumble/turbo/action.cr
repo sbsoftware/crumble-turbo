@@ -51,25 +51,26 @@ module Crumble::Turbo
 
       getter uri_path : String
       getter fields : Array(Field)
+      getter hidden : Bool = true
 
-      def initialize(@uri_path, @fields); end
+      def initialize(@uri_path, @fields, @hidden); end
 
-      def initialize(@uri_path)
+      def initialize(@uri_path, @hidden)
         @fields = [] of Field
       end
 
-      class Form < CSS::CSSClass; end
+      class Hidden < CSS::CSSClass; end
 
       class Style < CSS::Stylesheet
         rules do
-          rule Form do
+          rule Hidden do
             display None
           end
         end
       end
 
       ToHtml.instance_template do
-        form Form, action: uri_path, method: "POST" do
+        form (Hidden if hidden), action: uri_path, method: "POST" do
           fields.each do |field|
             input type: field.type, name: field.name, value: field.value
           end

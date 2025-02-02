@@ -63,7 +63,7 @@ class Orma::Record
             Crumble::Turbo::Action::FormTemplate::Field.new(
               type: Crumble::Turbo::Action::FormTemplate::Field::Type::Hidden,
               name: "value",
-              value: (!model.{{attr.id}}).to_s
+              value: (!model.{{attr.id}}.value).to_s
             )
           ]
         )

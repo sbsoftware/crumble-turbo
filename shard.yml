@@ -8,7 +8,7 @@ dependencies:
     version: ">= 0.16"
   to_html:
     github: sbsoftware/to_html.cr
-    version: "< 2.0.0"
+    version: ">= 1.4.0, < 2.0.0"
   crumble-stimulus:
     github: sbsoftware/crumble-stimulus
   stimulus:

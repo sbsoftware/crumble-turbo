@@ -45,20 +45,29 @@ module Orma
 
     stimulus_controller GenericModelActionController do
       targets :submit
+      values confirm_prompt: String
 
-      action :submit do
+      action :submit do |event|
+        event.preventDefault._call
+        event.stopPropagation._call
+
+        if this.hasConfirmPromptValue
+          return unless window.confirm(this.confirmPromptValue)
+        end
+
         this.submitTarget.click._call
       end
     end
 
     class GenericModelActionTemplate
       getter form_template
+      getter confirm_prompt : String?
 
-      def initialize(action_path, *, hidden = true)
+      def initialize(action_path, *, hidden = true, @confirm_prompt = nil)
         @form_template = FormTemplate.new(action_path, hidden: hidden)
       end
 
-      def initialize(action_path, fields, *, hidden = true)
+      def initialize(action_path, fields, *, hidden = true, @confirm_prompt = nil)
         @form_template = FormTemplate.new(action_path, fields, hidden: hidden)
       end
 
@@ -73,8 +82,14 @@ module Orma
         end
       end
 
+      def confirm_prompt_value
+        return unless prompt = confirm_prompt
+
+        GenericModelActionController.confirm_prompt_value(prompt)
+      end
+
       ToHtml.instance_template do
-        div GenericModelActionController do
+        div GenericModelActionController, confirm_prompt_value do
           form_template.to_html do
             input GenericModelActionController.submit_target, type: :submit
           end

@@ -95,4 +95,30 @@ class Orma::Record
       {% end %}
     end
   end
+
+  # Defines an action to delete the record from the database.
+  # Parameters:
+  #   * `name` - the name of the action
+  #   * `tpl` - the model template to render in the response
+  # Possible customizations:
+  #   * `def self.confirm_prompt(model)` - String message to be used as the prompt for a JavaScript confirm dialog
+  macro delete_record_action(name, tpl, &blk)
+    model_action({{name}}, {{tpl}}) do
+      controller do
+        model.destroy
+      end
+
+      def self.action_template(model)
+        ::Orma::ModelAction::GenericModelActionTemplate.new(self.uri_path(model.id), confirm_prompt: confirm_prompt(model))
+      end
+
+      def self.confirm_prompt(model)
+        nil
+      end
+
+      {% if blk %}
+        {{blk.body}}
+      {% end %}
+    end
+  end
 end

@@ -24,6 +24,10 @@ module Orma
       "#{URI_PATH_PREFIX}/#{model_class.name.gsub(/::/, "/").underscore}/#{model_id}/#{action_name}"
     end
 
+    def self.action_template(model)
+      GenericModelActionTemplate.new(self.uri_path(model.id))
+    end
+
     def model_id
       path_match[1].to_i
     end

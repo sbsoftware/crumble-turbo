@@ -12,10 +12,6 @@ class Orma::Record
         {{name.id.stringify}}
       end
 
-      def self.action_template(model)
-        ::Orma::ModelAction::GenericModelActionTemplate.new(self.uri_path(model.id))
-      end
-
       def self.model_class : Orma::Record.class
         {{@type.resolve}}
       end

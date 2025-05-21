@@ -119,6 +119,12 @@ class Orma::Record
     end
   end
 
+  # Defines an action to make a list of child models sortable via dragging.
+  # Parameters:
+  #   * `name` - the name of the action
+  #   * `assoc` - method of the parent model returning the children collection
+  #   * `child_view` - method of the child model returning the template to use in the sortable list
+  #   * `tpl` - the model template to render in the response
   macro reorder_children_action(name, assoc, child_view, tpl, &blk)
     model_action({{name}}, {{tpl}}, ReorderChildrenAction) do
       def association

@@ -1,6 +1,7 @@
 require "./model_template"
 require "./model_action"
 require "./create_child_action"
+require "./reorder_children_action"
 require "../crumble/turbo/action_registry"
 
 class Orma::Record
@@ -110,6 +111,32 @@ class Orma::Record
 
       def self.confirm_prompt(model)
         nil
+      end
+
+      {% if blk %}
+        {{blk.body}}
+      {% end %}
+    end
+  end
+
+  macro reorder_children_action(name, assoc, child_view, tpl, &blk)
+    model_action({{name}}, {{tpl}}, ReorderChildrenAction) do
+      def association
+        model.{{assoc.id}}
+      end
+
+      class Template(T) < ReorderChildrenAction::Template
+        getter children : Enumerable(T)
+
+        def initialize(@uri_path, @children); end
+
+        def child_view(child)
+          child.{{child_view.id}}
+        end
+      end
+
+      def self.action_template(model)
+        Template.new(self.uri_path(model.id), model.{{assoc.id}})
       end
 
       {% if blk %}

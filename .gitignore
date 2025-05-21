@@ -2,3 +2,4 @@ lib/
 bin/
 
 shard.lock
+test.db

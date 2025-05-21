@@ -44,13 +44,17 @@ module Crumble::Turbo
 
         getter type : Type
         getter name : String
-        getter value : String
+        getter value : String?
 
-        def initialize(@type, @name, @value); end
+        def initialize(@type, @name, @value = nil); end
+
+        ToHtml.instance_template do
+          input type: type, name: name, value: value
+        end
       end
 
       getter uri_path : String
-      getter fields : Array(Field)
+      getter fields : Iterable(Field)
       getter hidden : Bool = true
 
       def initialize(@uri_path, @fields, @hidden); end
@@ -72,7 +76,7 @@ module Crumble::Turbo
       ToHtml.instance_template do
         form (Hidden if hidden), action: uri_path, method: "POST" do
           fields.each do |field|
-            input type: field.type, name: field.name, value: field.value
+            field.to_html
           end
           yield
         end

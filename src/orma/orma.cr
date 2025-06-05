@@ -61,8 +61,8 @@ class Orma::Record
         {{child_class.resolve}}
       end
 
-      def assign_parent_id(child)
-        child.{{parent_id_attr.id}} = model.id
+      def parent_params
+        { {{parent_id_attr.id}}: model.id.try(&.value).not_nil! }
       end
 
       {% if blk %}

@@ -22,3 +22,5 @@ dependencies:
     version: ">= 0.5.1"
   sqlite3:
     github: crystal-lang/crystal-sqlite3
+  crumble-orma:
+    github: sbsoftware/crumble-orma

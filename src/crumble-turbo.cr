@@ -1,6 +1,6 @@
 require "crumble"
 require "crumble-stimulus"
-require "orma"
+require "crumble-orma"
 
 require "./ext/**"
 

@@ -2,7 +2,7 @@ require "../spec_helper"
 require "crumble/spec/test_request_context"
 
 module BooleanFlipSpec
-  class MyModel < Orma::Record
+  class MyModel < FakeRecord
     id_column id : Int64?
     column my_flag : Bool
 
@@ -20,10 +20,6 @@ module BooleanFlipSpec
           "something"
         end
       end
-    end
-
-    def self.db
-      FakeDB
     end
   end
 end

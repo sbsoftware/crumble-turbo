@@ -2,7 +2,7 @@ require "../spec_helper"
 require "crumble/spec/test_request_context"
 
 module DeleteRecordActionSpec
-  class MyModel < Orma::Record
+  class MyModel < FakeRecord
     id_column id : Int32
 
     delete_record_action :remove, default_view do
@@ -13,10 +13,6 @@ module DeleteRecordActionSpec
 
     model_template :default_view do
       div { id }
-    end
-
-    def self.db
-      FakeDB
     end
   end
 

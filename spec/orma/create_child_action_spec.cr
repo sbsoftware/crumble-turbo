@@ -1,21 +1,16 @@
 require "../spec_helper"
 require "uri"
-require "orma/spec/fake_db"
 require "crumble/spec/test_request_context"
 
 module CreateChildSpec
-  class ChildModel < Orma::Record
+  class ChildModel < FakeRecord
     id_column id : Int64?
     column my_model_id : Int64?
     column name : String?
     column some_string : String?
-
-    def self.db
-      FakeDB
-    end
   end
 
-  class MyModel < Orma::Record
+  class MyModel < FakeRecord
     id_column id : Int64?
 
     create_child_action :add_child, ChildModel, my_model_id, default_view do
@@ -46,10 +41,6 @@ module CreateChildSpec
       div do
         id
       end
-    end
-
-    def self.db
-      FakeDB
     end
   end
 end

@@ -3,13 +3,9 @@ require "orma/spec/fake_db"
 require "crumble/spec/test_request_context"
 
 module Orma::ModelActionSpec
-  class MyModel < Orma::Record
+  class MyModel < FakeRecord
     id_column id : Int64?
     column some_number : Int32 = 0
-
-    def self.db
-      FakeDB
-    end
 
     model_template :some_number_view do
       div do

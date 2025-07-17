@@ -1,39 +1,5 @@
 require "./model_action"
 
-# HACK: Add ordering
-class Orma::Query
-  getter order_clause : String?
-
-  def order_by_sort_order!
-    @order_clause = " ORDER BY sort_order ASC"
-
-    self
-  end
-
-  private def find_all_query
-    qry = previous_def
-
-    if order = order_clause
-      qry + order
-    else
-      qry
-    end
-  end
-end
-
-# HACK: Add #find for associations
-class Orma::Query
-  def find(id)
-    if where_clause = @where_clause
-      @where_clause = "#{where_clause} AND id=#{id}"
-    else
-      @where_clause = "id=#{id}"
-    end
-
-    T.query_one("#{find_all_query} LIMIT 1")
-  end
-end
-
 abstract class ReorderChildrenAction < Orma::ModelAction
   SUBJECT_ID_FIELD_NAME = "subject_id"
   TARGET_ID_FIELD_NAME = "target_id"
@@ -57,8 +23,8 @@ abstract class ReorderChildrenAction < Orma::ModelAction
       end
     end
 
-    subject = association.find(subject_id)
-    target = association.find(target_id)
+    subject = association.where(id: subject_id).first
+    target = association.where(id: target_id).first
 
     items = association.order_by_sort_order!.to_a
     if i = items.index(target)

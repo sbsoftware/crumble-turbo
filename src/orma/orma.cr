@@ -142,7 +142,7 @@ class Orma::Record
       end
 
       def self.action_template(model)
-        Template.new(self.uri_path(model.id), model.{{assoc.id}})
+        Template.new(self.uri_path(model.id), model.{{assoc.id}}.to_a)
       end
 
       {% if blk %}

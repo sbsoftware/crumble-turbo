@@ -1,11 +1,12 @@
 module Crumble::Turbo
   abstract class Action
+    include Crumble::Server::ViewHandler
+
     URI_PATH_PREFIX = "/a"
 
-    getter ctx : Crumble::Server::RequestContext
     getter path_match : Regex::MatchData
 
-    def initialize(@ctx, @path_match); end
+    def initialize(@request_ctx, @path_match); end
 
     macro inherited
       extend ClassMethods
@@ -121,6 +122,11 @@ module Crumble::Turbo
       end
 
       true
+    end
+
+    # Crumble::Server::ViewHandler method
+    def window_title : String?
+      nil
     end
   end
 end

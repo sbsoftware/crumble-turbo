@@ -2,11 +2,7 @@ require "../../spec_helper"
 
 module Crumble::Turbo::ActionRegistrySpec
   class MyAction < Action
-    def self.action_name : String
-      "my_action"
-    end
-
-    def controller
+    controller do
       ctx.response << "Yay!"
     end
   end

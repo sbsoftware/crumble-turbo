@@ -9,11 +9,9 @@ module Crumble::Turbo
     def initialize(@request_ctx, @path_match); end
 
     macro inherited
-      extend ClassMethods
-    end
-
-    private module ClassMethods
-      abstract def action_name : String
+      def self.action_name : String
+        {{@type.name.stringify.gsub(/::/, "__").underscore.gsub(/_action$/, "")}}
+      end
     end
 
     macro before(&blk)

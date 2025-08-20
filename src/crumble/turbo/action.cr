@@ -12,6 +12,10 @@ module Crumble::Turbo
       def self.action_name : String
         {{@type.name.stringify.gsub(/::/, "__").underscore.gsub(/_action$/, "")}}
       end
+
+      {% unless @type.abstract? %}
+        ::Crumble::Turbo::ActionRegistry.add({{@type}})
+      {% end %}
     end
 
     macro before(&blk)

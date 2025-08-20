@@ -7,8 +7,6 @@ module Crumble::Turbo::ActionRegistrySpec
     end
   end
 
-  ActionRegistry.add(ActionRegistrySpec::MyAction)
-
   describe ActionRegistry do
     it "should handle a matching request to the crumble server" do
       res_body = String.build do |res_io|

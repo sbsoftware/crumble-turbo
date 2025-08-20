@@ -31,8 +31,6 @@ class Orma::Record
     def {{name.id.stringify.underscore.id}}_action_template
       {{name.id.stringify.camelcase.id}}Action.action_template(self)
     end
-
-    Crumble::Turbo::ActionRegistry.add({{@type.name}}::{{name.id.stringify.camelcase.id}}Action)
   end
 
   macro boolean_flip_action(name, attr, tpl, &blk)

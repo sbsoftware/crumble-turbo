@@ -6,8 +6,12 @@ module DeleteRecordActionSpec
     id_column id : Int32
 
     delete_record_action :remove, default_view do
-      def self.confirm_prompt(model)
-        "Really delete?"
+      view do
+        template do
+          form_wrapper(model, confirm_prompt: "Really delete?").to_html do
+            nil
+          end
+        end
       end
     end
 

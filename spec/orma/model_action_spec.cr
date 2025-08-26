@@ -15,8 +15,15 @@ module Orma::ModelActionSpec
 
     model_action :inc_some_number, some_number_view do
       controller do
-        model.some_number = model.some_number.value + 1
-        model.save
+        model.update(some_number: model.some_number.value + 1)
+      end
+
+      view do
+        template do
+          form_wrapper.to_html do
+            button { "Inc" }
+          end
+        end
       end
     end
   end
@@ -34,9 +41,7 @@ module Orma::ModelActionSpec
       </div>
       HTML
 
-      my_model.inc_some_number_action_template.to_html do
-        # template yields so a block is mandatory here
-      end.should eq(expected)
+      my_model.inc_some_number_action_template.to_html.should eq(expected)
     end
   end
 

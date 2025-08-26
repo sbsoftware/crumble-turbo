@@ -18,6 +18,10 @@ module Crumble::Turbo
       {% end %}
     end
 
+    def refresh_template
+      self.class.action_template(ctx).turbo_stream.to_html(ctx.response)
+    end
+
     macro before(&blk)
       def before_action
         {{blk.body}}
@@ -30,6 +34,31 @@ module Crumble::Turbo
       def controller
         {{blk.body}}
       end
+    end
+
+    macro view(&blk)
+      class Template
+        include Crumble::ContextView
+        include IdentifiableView
+
+        delegate :form_wrapper, to: ::{{@type}}
+
+        class {{@type.name}}Id < CSS::ElementId; end
+
+        def dom_id
+          {{@type.name}}Id
+        end
+
+        {{blk.body}}
+      end
+
+      def self.action_template(ctx) : IdentifiableView
+        Template.new(ctx: ctx)
+      end
+    end
+
+    def self.form_wrapper(**opts)
+      FormTemplate.new(uri_path, **opts)
     end
 
     class FormTemplate
@@ -58,11 +87,11 @@ module Crumble::Turbo
 
       getter uri_path : String
       getter fields : Iterable(Field)
-      getter hidden : Bool = true
+      getter hidden : Bool
 
-      def initialize(@uri_path, @fields, @hidden); end
+      def initialize(@uri_path, @fields, @hidden = true); end
 
-      def initialize(@uri_path, @hidden)
+      def initialize(@uri_path, @hidden = true)
         @fields = [] of Field
       end
 
@@ -98,6 +127,7 @@ module Crumble::Turbo
       return true if instance.before_action_halted?
 
       instance.controller
+      instance.refresh_template
 
       true
     end

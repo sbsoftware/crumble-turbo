@@ -66,20 +66,10 @@ module Orma
     def add_context_attributes(instance, ctx)
     end
 
-    class Template
-      getter uri_path : String
-
-      def initialize(@uri_path); end
-
-      ToHtml.instance_template do
-        # nothing
-      end
-    end
-
     macro form(&blk)
-      class Template < Template
-        ToHtml.instance_template do
-          FormTemplate.new(uri_path, hidden: false).to_html do
+      view do
+        template do
+          form_wrapper(model, hidden: false).to_html do
             {{blk.body}}
           end
         end

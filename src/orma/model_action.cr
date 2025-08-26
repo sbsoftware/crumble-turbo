@@ -10,11 +10,35 @@ module Orma
 
     private module ClassMethods
       abstract def model_class : ::Orma::Record.class
-      abstract def action_template(model)
     end
 
     abstract def model
     abstract def model_template : IdentifiableView
+
+    macro view(&blk)
+      class Template
+        include Crumble::ContextView
+        include IdentifiableView
+
+        getter model : ::{{@type.constant("MODEL_CLASS").resolve}}
+
+        delegate :form_wrapper, to: ::{{@type}}
+
+        class {{@type.name}}Id < CSS::ElementId; end
+
+        def initialize(@ctx, @model); end
+
+        def dom_id
+          {{@type.name}}Id
+        end
+
+        {{blk.body}}
+      end
+
+      def self.action_template(ctx, model) : IdentifiableView
+        Template.new(ctx: ctx, model: model)
+      end
+    end
 
     def self.path_matcher : Regex
       @@path_matcher ||= /#{URI_PATH_PREFIX}\/#{model_class.name.gsub(/::/, "\\/").underscore}\/(\d+)\/#{action_name}/
@@ -24,8 +48,8 @@ module Orma
       "#{URI_PATH_PREFIX}/#{model_class.name.gsub(/::/, "/").underscore}/#{model_id}/#{action_name}"
     end
 
-    def self.action_template(model)
-      GenericModelActionTemplate.new(self.uri_path(model.id))
+    def self.form_wrapper(model, **opts)
+      GenericModelActionTemplate.new(uri_path(model.id), **opts)
     end
 
     def model_id
@@ -37,6 +61,12 @@ module Orma
 
       model_template.turbo_stream.to_html(ctx.response)
       Crumble::Turbo::ModelTemplateRefreshService.notify(model_template)
+    end
+
+    def refresh_template
+      return unless model = self.model
+
+      self.class.action_template(ctx, model).turbo_stream.to_html(ctx.response)
     end
 
     abstract def model_action_controller

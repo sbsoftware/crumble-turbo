@@ -16,12 +16,29 @@ module Crumble::Turbo::StaticActionSpec
   end
 
   class MyAction < Crumble::Turbo::Action
-    def self.action_name : String
-      "my_action"
+    controller do
+      SomeStaticView.new.turbo_stream.to_html(ctx.response)
     end
 
-    def controller
-      SomeStaticView.new.turbo_stream.to_html(ctx.response)
+    view do
+      template do
+        form_wrapper.to_html do
+          button { "Start" }
+        end
+      end
+    end
+  end
+
+  describe ".action_template" do
+    it "returns the correct HTML" do
+      expected = <<-HTML.squish
+      <form action="#{MyAction.uri_path}" method="POST">
+        <button>Start</button>
+      </form>
+      HTML
+
+      ctx = Crumble::Server::TestRequestContext.new(method: "GET", resource: "/")
+      MyAction.action_template(ctx).to_html.should eq(expected)
     end
   end
 

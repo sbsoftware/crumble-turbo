@@ -5,6 +5,14 @@ module Crumble::Turbo::ActionRegistrySpec
     controller do
       ctx.response << "Yay!"
     end
+
+    view do
+      template do
+        form_wrapper.to_html do
+          button { "Do it!" }
+        end
+      end
+    end
   end
 
   describe ActionRegistry do

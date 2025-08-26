@@ -10,15 +10,23 @@ module BooleanFlipSpec
       before do
         model.id == 77_i64
       end
+
+      view do
+        template do
+          form_wrapper(model).to_html do
+            strong model.id do
+              "something"
+            end
+          end
+        end
+      end
     end
 
     boolean_flip_action :always_switch, :my_flag, :default_view
 
     model_template :default_view do
-      switch_action_template.to_html do
-        strong id do
-          "something"
-        end
+      div do
+        "test"
       end
     end
   end

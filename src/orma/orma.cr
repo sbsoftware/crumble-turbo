@@ -7,6 +7,8 @@ require "../crumble/turbo/action_registry"
 class Orma::Record
   macro model_action(name, refreshed_model_template, base_class = Orma::ModelAction, &blk)
     class {{name.id.stringify.camelcase.id}}Action < {{base_class}}
+      MODEL_CLASS = {{@type}}
+
       @model : {{@type}}?
 
       def self.action_name : String
@@ -28,8 +30,8 @@ class Orma::Record
       {{blk.body}}
     end
 
-    def {{name.id.stringify.underscore.id}}_action_template
-      {{name.id.stringify.camelcase.id}}Action.action_template(self)
+    def {{name.id.stringify.underscore.id}}_action_template(ctx)
+      {{name.id.stringify.camelcase.id}}Action.action_template(ctx, self)
     end
   end
 
@@ -51,18 +53,12 @@ class Orma::Record
         end
       end
 
-      def self.action_template(model)
-        ::Orma::ModelAction::GenericModelActionTemplate.new(
-          self.uri_path(model.id),
-          [
-            Crumble::Turbo::Action::FormTemplate::Field.new(
-              type: Crumble::Turbo::Action::FormTemplate::Field::Type::Hidden,
-              name: "value",
-              value: (!model.{{attr.id}}.value).to_s
-            )
-          ],
-          hidden: true
-        )
+      view do
+        template do
+          form_wrapper(hidden: true).to_html do
+            input type: :hidden, name: "value", value: (!model.{{attr.id}}.value).to_s
+          end
+        end
       end
 
       {% if blk %}
@@ -81,10 +77,6 @@ class Orma::Record
         child.{{parent_id_attr.id}} = model.id
       end
 
-      def self.action_template(model)
-        Template.new(uri_path(model.id))
-      end
-
       {% if blk %}
         {{blk.body}}
       {% end %}
@@ -95,20 +87,10 @@ class Orma::Record
   # Parameters:
   #   * `name` - the name of the action
   #   * `tpl` - the model template to render in the response
-  # Possible customizations:
-  #   * `def self.confirm_prompt(model)` - String message to be used as the prompt for a JavaScript confirm dialog
   macro delete_record_action(name, tpl, &blk)
     model_action({{name}}, {{tpl}}) do
       controller do
         model.destroy
-      end
-
-      def self.action_template(model)
-        ::Orma::ModelAction::GenericModelActionTemplate.new(self.uri_path(model.id), confirm_prompt: confirm_prompt(model))
-      end
-
-      def self.confirm_prompt(model)
-        nil
       end
 
       {% if blk %}

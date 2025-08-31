@@ -42,7 +42,7 @@ module Crumble::Turbo
 
         getter action : ::{{@type}}
 
-        delegate :ctx, :form_wrapper, to: action
+        delegate :ctx, :action_form, to: action
 
         def initialize(@action); end
 
@@ -64,8 +64,8 @@ module Crumble::Turbo
       end
     end
 
-    def self.form_wrapper(**opts)
-      FormTemplate.new(uri_path, **opts)
+    def action_form(**opts)
+      ActionForm.new(uri_path, **opts)
     end
 
     class FormTemplate
@@ -154,6 +154,10 @@ module Crumble::Turbo
 
     def self.uri_path : String
       "#{URI_PATH_PREFIX}/#{action_name}"
+    end
+
+    def uri_path : String
+      self.class.uri_path
     end
 
     def before_action_halted?

@@ -8,7 +8,7 @@ module Crumble::Turbo::ActionRegistrySpec
 
     view do
       template do
-        form_wrapper.to_html do
+        action_form.to_html do
           button { "Do it!" }
         end
       end

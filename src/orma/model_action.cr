@@ -21,7 +21,7 @@ module Orma
 
         getter action : ::{{@type}}
 
-        delegate :ctx, :model, :form_wrapper, to: action
+        delegate :ctx, :model, :action_form, to: action
 
         macro template(&tpl_blk)
           ToHtml.instance_template \{{tpl_blk}}

@@ -103,7 +103,7 @@ abstract class ReorderChildrenAction < Orma::ModelAction
 
     template do
       div DragController, DragController.dragstart_action("dragstart"), DragController.drag_action("drag"), DragController.dragover_action("dragover"), DragController.dragenter_action("dragenter"), DragController.drop_action("drop"), DragController.dragend_action("dragend") do
-        form_wrapper(hidden: true).to_html do
+        action_form(hidden: true).to_html do
           input DragController.subject_id_target, type: :hidden, name: SUBJECT_ID_FIELD_NAME
           input DragController.target_id_target, type: :hidden, name: TARGET_ID_FIELD_NAME
           input DragController.submit_target, type: :submit, name: "submit", value: "submit"

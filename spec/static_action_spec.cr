@@ -22,7 +22,7 @@ module Crumble::Turbo::StaticActionSpec
 
     view do
       template do
-        form_wrapper.to_html do
+        action_form.to_html do
           button { "Start" }
         end
       end

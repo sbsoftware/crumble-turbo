@@ -69,7 +69,7 @@ module Orma
     macro form(&blk)
       view do
         template do
-          form_wrapper(model, hidden: false).to_html do
+          action_form(hidden: false).to_html do
             {{blk.body}}
           end
         end

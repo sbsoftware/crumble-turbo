@@ -49,7 +49,7 @@ class Orma::Record
 
       view do
         template do
-          form_wrapper(hidden: true).to_html do
+          action_form(hidden: true).to_html do
             input type: :hidden, name: "value", value: (!model.{{attr.id}}.value).to_s
           end
         end

@@ -45,9 +45,9 @@ describe "the switch action" do
       <div class="orma--model-action--generic-model-action-template--inner" data-action="click->orma--model-action--generic-model-action#submit"></div>
     </div>
     HTML
-    mdl.switch_action_template.to_html do
-      # no content
-    end.should eq(expected_html)
+
+    ctx = Crumble::Server::TestRequestContext.new
+    mdl.switch_action_template(ctx).to_html.should eq(expected_html)
   end
 
   describe "when handling a request" do
@@ -56,7 +56,7 @@ describe "the switch action" do
 
     it "flips the attribute when the before block returns true" do
       ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/boolean_flip_spec/my_model/77/switch", body: URI::Params.encode({value: "true"}))
-      FakeDB.expect("SELECT * FROM boolean_flip_spec_my_models WHERE id=77 LIMIT 1").set_result([{"id" => 77_i64, "my_flag" => false} of String => DB::Any])
+      FakeDB.expect("SELECT * FROM boolean_flip_spec_my_models WHERE id=77").set_result([{"id" => 77_i64, "my_flag" => false} of String => DB::Any])
       FakeDB.expect("UPDATE boolean_flip_spec_my_models SET my_flag=TRUE WHERE id=77")
       BooleanFlipSpec::MyModel::SwitchAction.handle(ctx)
     end
@@ -76,9 +76,9 @@ describe "the always_switch action" do
       <div class="orma--model-action--generic-model-action-template--inner" data-action="click->orma--model-action--generic-model-action#submit"></div>
     </div>
     HTML
-    mdl.always_switch_action_template.to_html do
-      # no content
-    end.should eq(expected_html)
+
+    ctx = Crumble::Server::TestRequestContext.new
+    mdl.always_switch_action_template(ctx).to_html.should eq(expected_html)
   end
 
   describe "when handling a request" do
@@ -87,7 +87,7 @@ describe "the always_switch action" do
 
     it "flips the attribute" do
       ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/boolean_flip_spec/my_model/71/always_switch", body: URI::Params.encode({value: "true"}))
-      FakeDB.expect("SELECT * FROM boolean_flip_spec_my_models WHERE id=71 LIMIT 1").set_result([{"id" => 71_i64, "my_flag" => false} of String => DB::Any])
+      FakeDB.expect("SELECT * FROM boolean_flip_spec_my_models WHERE id=71").set_result([{"id" => 71_i64, "my_flag" => false} of String => DB::Any])
       FakeDB.expect("UPDATE boolean_flip_spec_my_models SET my_flag=TRUE WHERE id=71")
       BooleanFlipSpec::MyModel::AlwaysSwitchAction.handle(ctx)
     end

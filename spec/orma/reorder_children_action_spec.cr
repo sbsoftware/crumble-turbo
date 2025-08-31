@@ -64,7 +64,8 @@ module ReorderChildrenActionSpec
       </div>
       HTML
 
-      parent.sort_children_action_template.to_html.should eq(expected)
+      ctx = Crumble::Server::TestRequestContext.new
+      parent.sort_children_action_template(ctx).to_html.should eq(expected)
     end
 
     context "when handling a request" do

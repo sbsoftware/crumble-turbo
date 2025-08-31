@@ -53,7 +53,8 @@ describe "MyModel #add_child_action_template" do
     <form action="/a/create_child_spec/my_model/7/add_child" method="POST"><input type="text" name="name"><input type="submit" name="Add Child"></form>
     HTML
 
-    my_model.add_child_action_template.to_html.should eq(expected_html)
+    ctx = Crumble::Server::TestRequestContext.new
+    my_model.add_child_action_template(ctx).to_html.should eq(expected_html)
   end
 
   context "when handling a request" do
@@ -62,21 +63,21 @@ describe "MyModel #add_child_action_template" do
 
     it "creates a new ChildModel when the before block returns true" do
       mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/7/add_child", body: URI::Params.encode({name: "Bla"}))
-      FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=7 LIMIT 1").set_result([{"id" => 7_i64} of String => DB::Any])
+      FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=7").set_result([{"id" => 7_i64} of String => DB::Any])
       FakeDB.expect("INSERT INTO create_child_spec_child_models(my_model_id, name, some_string) VALUES (7, 'Bla', NULL)")
       CreateChildSpec::MyModel::AddChildAction.handle(mock_ctx)
     end
 
     it "returns 400 when the before block returns false" do
       mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/2/add_child", body: URI::Params.encode({name: "Bla"}))
-      FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=2 LIMIT 1").set_result([{"id" => 2_i64} of String => DB::Any])
+      FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=2").set_result([{"id" => 2_i64} of String => DB::Any])
       CreateChildSpec::MyModel::AddChildAction.handle(mock_ctx)
       mock_ctx.response.status_code.should eq(400)
     end
 
     it "creates a new ChildModel when there is no before block" do
       mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/1/always_add_child", body: URI::Params.encode({name: "Bla"}))
-      FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=1 LIMIT 1").set_result([{"id" => 1_i64} of String => DB::Any])
+      FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=1").set_result([{"id" => 1_i64} of String => DB::Any])
       FakeDB.expect("INSERT INTO create_child_spec_child_models(my_model_id, name, some_string) VALUES (1, 'Bla', '/a/create_child_spec/my_model/1/always_add_child')")
       CreateChildSpec::MyModel::AlwaysAddChildAction.handle(mock_ctx)
       mock_ctx.response.status_code.should eq(201)

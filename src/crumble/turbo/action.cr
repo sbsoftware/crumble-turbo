@@ -1,12 +1,12 @@
+require "./action_form"
+
 module Crumble::Turbo
   abstract class Action
     include Crumble::Server::ViewHandler
 
     URI_PATH_PREFIX = "/a"
 
-    getter path_match : Regex::MatchData
-
-    def initialize(@request_ctx, @path_match); end
+    def initialize(@request_ctx); end
 
     macro inherited
       def self.action_name : String
@@ -19,7 +19,7 @@ module Crumble::Turbo
     end
 
     def refresh_template
-      self.class.action_template(ctx).turbo_stream.to_html(ctx.response)
+      action_template.turbo_stream.to_html(ctx.response)
     end
 
     macro before(&blk)
@@ -38,10 +38,17 @@ module Crumble::Turbo
 
     macro view(&blk)
       class Template
-        include Crumble::ContextView
         include IdentifiableView
 
-        delegate :form_wrapper, to: ::{{@type}}
+        getter action : ::{{@type}}
+
+        delegate :ctx, :form_wrapper, to: action
+
+        def initialize(@action); end
+
+        macro template(&tpl_blk)
+          ToHtml.instance_template \{{tpl_blk}}
+        end
 
         class {{@type.name}}Id < CSS::ElementId; end
 
@@ -52,8 +59,8 @@ module Crumble::Turbo
         {{blk.body}}
       end
 
-      def self.action_template(ctx) : IdentifiableView
-        Template.new(ctx: ctx)
+      def action_template : IdentifiableView
+        Template.new(self)
       end
     end
 
@@ -117,19 +124,28 @@ module Crumble::Turbo
 
     def self.handle(ctx) : Bool
       return false unless ctx.request.method == "POST"
-
-      match = self.path_matcher.match(ctx.request.path)
-      return false unless match
+      return false unless match = match_request(ctx)
 
       ctx.response.headers.add("Content-Type", TURBO_STREAM_MIME_TYPE)
 
-      instance = new(ctx, match)
-      return true if instance.before_action_halted?
-
-      instance.controller
-      instance.refresh_template
+      matched_handle(ctx, match)
 
       true
+    end
+
+    def self.match_request(ctx) : Regex::MatchData?
+      self.path_matcher.match(ctx.request.path)
+    end
+
+    def self.matched_handle(ctx, path_match)
+      new(ctx).handle
+    end
+
+    def handle
+      return if before_action_halted?
+
+      self.controller
+      refresh_template
     end
 
     def self.path_matcher : Regex

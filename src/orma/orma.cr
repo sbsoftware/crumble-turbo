@@ -7,9 +7,7 @@ require "../crumble/turbo/action_registry"
 class Orma::Record
   macro model_action(name, refreshed_model_template, base_class = Orma::ModelAction, &blk)
     class {{name.id.stringify.camelcase.id}}Action < {{base_class}}
-      MODEL_CLASS = {{@type}}
-
-      @model : {{@type}}?
+      getter model : ::{{@type}}
 
       def self.action_name : String
         {{name.id.stringify}}
@@ -17,10 +15,6 @@ class Orma::Record
 
       def self.model_class : Orma::Record.class
         {{@type.resolve}}
-      end
-
-      def model
-        @model ||= self.class.model_class.find(model_id)
       end
 
       def model_template : IdentifiableView
@@ -31,7 +25,7 @@ class Orma::Record
     end
 
     def {{name.id.stringify.underscore.id}}_action_template(ctx)
-      {{name.id.stringify.camelcase.id}}Action.action_template(ctx, self)
+      {{name.id.stringify.camelcase.id}}Action.new(ctx, self).action_template
     end
   end
 
@@ -111,18 +105,8 @@ class Orma::Record
         model.{{assoc.id}}
       end
 
-      class Template(T) < ReorderChildrenAction::Template
-        getter children : Enumerable(T)
-
-        def initialize(@uri_path, @children); end
-
-        def child_view(child)
-          child.{{child_view.id}}
-        end
-      end
-
-      def self.action_template(model)
-        Template.new(self.uri_path(model.id), model.{{assoc.id}}.to_a)
+      def child_view(child)
+        child.{{child_view.id}}
       end
 
       {% if blk %}

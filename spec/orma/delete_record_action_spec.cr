@@ -33,9 +33,8 @@ module DeleteRecordActionSpec
       </div>
       HTML
 
-      mdl.remove_action_template.to_html do
-        # no content
-      end.should eq(expected_html)
+      ctx = Crumble::Server::TestRequestContext.new
+      mdl.remove_action_template(ctx).to_html.should eq(expected_html)
     end
   end
 end

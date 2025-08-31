@@ -41,7 +41,8 @@ module Orma::ModelActionSpec
       </div>
       HTML
 
-      my_model.inc_some_number_action_template.to_html.should eq(expected)
+      ctx = Crumble::Server::TestRequestContext.new
+      my_model.inc_some_number_action_template(ctx).to_html.should eq(expected)
     end
   end
 
@@ -51,7 +52,7 @@ module Orma::ModelActionSpec
 
     it "executes the controller" do
       mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/orma/model_action_spec/my_model/7/inc_some_number")
-      FakeDB.expect("SELECT * FROM #{MyModel.table_name} WHERE id=7 LIMIT 1").set_result([{"id" => 7_i64, "some_number" => 3} of String => DB::Any])
+      FakeDB.expect("SELECT * FROM #{MyModel.table_name} WHERE id=7").set_result([{"id" => 7_i64, "some_number" => 3} of String => DB::Any])
       FakeDB.expect("UPDATE #{MyModel.table_name} SET some_number=4 WHERE id=7")
       MyModel::IncSomeNumberAction.handle(mock_ctx)
     end

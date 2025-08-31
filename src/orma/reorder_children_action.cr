@@ -4,8 +4,6 @@ abstract class ReorderChildrenAction < Orma::ModelAction
   SUBJECT_ID_FIELD_NAME = "subject_id"
   TARGET_ID_FIELD_NAME = "target_id"
 
-  abstract def association
-
   controller do
     unless body = ctx.request.body
       ctx.response.status = :bad_request
@@ -44,13 +42,8 @@ abstract class ReorderChildrenAction < Orma::ModelAction
     ctx.response.status = :created
   end
 
-  abstract class Template
-    getter uri_path : String
-
-    abstract def children
-    abstract def child_view(child)
-
-    def initialize(@uri_path); end
+  view do
+    delegate :association, :child_view, to: action
 
     stimulus_controller DragController do
       targets :subject_id, :target_id, :submit
@@ -102,39 +95,25 @@ abstract class ReorderChildrenAction < Orma::ModelAction
       end
     end
 
-    class SubjectId
-      getter id : Int64 | Int32 | Nil
-
-      def initialize(@id); end
-
+    record SubjectId, id : Int64 | Int32 | Nil do
       ToHtml.instance_tag_attrs do
         data_reorder_children_action_subject_id = id
       end
     end
 
-    class Hidden < CSS::CSSClass; end
-
-    ToHtml.instance_template do
+    template do
       div DragController, DragController.dragstart_action("dragstart"), DragController.drag_action("drag"), DragController.dragover_action("dragover"), DragController.dragenter_action("dragenter"), DragController.drop_action("drop"), DragController.dragend_action("dragend") do
-        form Hidden, action: uri_path, method: "POST" do
+        form_wrapper(hidden: true).to_html do
           input DragController.subject_id_target, type: :hidden, name: SUBJECT_ID_FIELD_NAME
           input DragController.target_id_target, type: :hidden, name: TARGET_ID_FIELD_NAME
           input DragController.submit_target, type: :submit, name: "submit", value: "submit"
         end
         div do
-          children.each do |child|
+          association.each do |child|
             div SubjectId.new(child.id.try(&.value)), draggable: "true" do
               child_view(child)
             end
           end
-        end
-      end
-    end
-
-    class Style < CSS::Stylesheet
-      rules do
-        rule Hidden do
-          display None
         end
       end
     end

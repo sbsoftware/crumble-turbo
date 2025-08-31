@@ -17,16 +17,19 @@ module Orma
 
     macro view(&blk)
       class Template
-        include Crumble::ContextView
         include IdentifiableView
 
-        getter model : ::{{@type.constant("MODEL_CLASS").resolve}}
+        getter action : ::{{@type}}
 
-        delegate :form_wrapper, to: ::{{@type}}
+        delegate :ctx, :model, :form_wrapper, to: action
+
+        macro template(&tpl_blk)
+          ToHtml.instance_template \{{tpl_blk}}
+        end
 
         class {{@type.name}}Id < CSS::ElementId; end
 
-        def initialize(@ctx, @model); end
+        def initialize(@action); end
 
         def dom_id
           {{@type.name}}Id
@@ -35,10 +38,12 @@ module Orma
         {{blk.body}}
       end
 
-      def self.action_template(ctx, model) : IdentifiableView
-        Template.new(ctx: ctx, model: model)
+      def action_template : IdentifiableView
+        Template.new(self)
       end
     end
+
+    def initialize(@request_ctx, @model); end
 
     def self.path_matcher : Regex
       @@path_matcher ||= /#{URI_PATH_PREFIX}\/#{model_class.name.gsub(/::/, "\\/").underscore}\/(\d+)\/#{action_name}/
@@ -48,12 +53,20 @@ module Orma
       "#{URI_PATH_PREFIX}/#{model_class.name.gsub(/::/, "/").underscore}/#{model_id}/#{action_name}"
     end
 
-    def self.form_wrapper(model, **opts)
-      GenericModelActionTemplate.new(uri_path(model.id), **opts)
+    def self.matched_handle(ctx, match)
+      model_id = match[1].to_i
+      model = model_class.where(id: model_id).first?
+
+      if model
+        new(ctx, model).handle
+      else
+        model_not_found(ctx)
+      end
     end
 
-    def model_id
-      path_match[1].to_i
+    def self.model_not_found(ctx)
+      ctx.response.status_code = 404
+      ctx.response << "Not Found"
     end
 
     def controller
@@ -61,12 +74,6 @@ module Orma
 
       model_template.turbo_stream.to_html(ctx.response)
       Crumble::Turbo::ModelTemplateRefreshService.notify(model_template)
-    end
-
-    def refresh_template
-      return unless model = self.model
-
-      self.class.action_template(ctx, model).turbo_stream.to_html(ctx.response)
     end
 
     abstract def model_action_controller

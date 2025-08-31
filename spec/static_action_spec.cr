@@ -38,7 +38,7 @@ module Crumble::Turbo::StaticActionSpec
       HTML
 
       ctx = Crumble::Server::TestRequestContext.new(method: "GET", resource: "/")
-      MyAction.action_template(ctx).to_html.should eq(expected)
+      MyAction.new(ctx).action_template.to_html.should eq(expected)
     end
   end
 

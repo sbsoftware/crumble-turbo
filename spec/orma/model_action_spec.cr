@@ -20,7 +20,7 @@ module Orma::ModelActionSpec
 
       view do
         template do
-          form_wrapper.to_html do
+          custom_action_trigger.to_html do
             button { "Inc" }
           end
         end

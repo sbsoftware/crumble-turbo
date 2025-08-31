@@ -1,6 +1,7 @@
 require "../crumble/turbo/action"
 require "../crumble/turbo/identifiable_view"
 require "../crumble/turbo/model_template_refresh_service"
+require "../crumble/turbo/custom_action_trigger"
 
 module Orma
   abstract class ModelAction < Crumble::Turbo::Action
@@ -21,7 +22,7 @@ module Orma
 
         getter action : ::{{@type}}
 
-        delegate :ctx, :model, :action_form, to: action
+        delegate :ctx, :model, :action_form, :custom_action_trigger, to: action
 
         macro template(&tpl_blk)
           ToHtml.instance_template \{{tpl_blk}}
@@ -53,6 +54,10 @@ module Orma
       "#{URI_PATH_PREFIX}/#{model_class.name.gsub(/::/, "/").underscore}/#{model_id}/#{action_name}"
     end
 
+    def uri_path
+      self.class.uri_path(model.id)
+    end
+
     def self.matched_handle(ctx, match)
       model_id = match[1].to_i
       model = model_class.where(id: model_id).first?
@@ -69,6 +74,10 @@ module Orma
       ctx.response << "Not Found"
     end
 
+    def custom_action_trigger(**opts)
+      Crumble::Turbo::CustomActionTrigger.new(uri_path, **opts)
+    end
+
     def controller
       model_action_controller
 
@@ -81,63 +90,6 @@ module Orma
     macro controller(&blk)
       def model_action_controller
         {{blk.body}}
-      end
-    end
-
-    stimulus_controller GenericModelActionController do
-      targets :submit
-      values confirm_prompt: String
-
-      action :submit do |event|
-        event.preventDefault._call
-        event.stopPropagation._call
-
-        if this.hasConfirmPromptValue
-          return unless window.confirm(this.confirmPromptValue)
-        end
-
-        this.submitTarget.click._call
-      end
-    end
-
-    class GenericModelActionTemplate
-      getter form_template
-      getter confirm_prompt : String?
-
-      def initialize(action_path, *, hidden = true, @confirm_prompt = nil)
-        @form_template = FormTemplate.new(action_path, hidden: hidden)
-      end
-
-      def initialize(action_path, fields, *, hidden = true, @confirm_prompt = nil)
-        @form_template = FormTemplate.new(action_path, fields, hidden: hidden)
-      end
-
-      class Inner < CSS::CSSClass; end
-
-      class Style < CSS::Stylesheet
-        rules do
-          rule Inner do
-            width 100.percent
-            height 100.percent
-          end
-        end
-      end
-
-      def confirm_prompt_value
-        return unless prompt = confirm_prompt
-
-        GenericModelActionController.confirm_prompt_value(prompt)
-      end
-
-      ToHtml.instance_template do
-        div GenericModelActionController, confirm_prompt_value do
-          form_template.to_html do
-            input GenericModelActionController.submit_target, type: :submit
-          end
-          div Inner, GenericModelActionController.submit_action("click") do
-            yield
-          end
-        end
       end
     end
   end

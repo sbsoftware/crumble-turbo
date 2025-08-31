@@ -8,7 +8,7 @@ module DeleteRecordActionSpec
     delete_record_action :remove, default_view do
       view do
         template do
-          form_wrapper(model, confirm_prompt: "Really delete?").to_html do
+          custom_action_trigger(confirm_prompt: "Really delete?").to_html do
             nil
           end
         end

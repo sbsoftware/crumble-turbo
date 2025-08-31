@@ -13,7 +13,7 @@ module BooleanFlipSpec
 
       view do
         template do
-          form_wrapper(model).to_html do
+          custom_action_trigger.to_html do
             strong model.id do
               "something"
             end

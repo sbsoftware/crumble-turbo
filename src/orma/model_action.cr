@@ -16,30 +16,10 @@ module Orma
     abstract def model_template : IdentifiableView
 
     macro view(&blk)
-      class Template
-        include IdentifiableView
-
-        getter action : ::{{@type}}
-
-        delegate :ctx, :model, :action_form, :custom_action_trigger, to: action
-
-        macro template(&tpl_blk)
-          ToHtml.instance_template \{{tpl_blk}}
-        end
-
-        class {{@type.name}}Id < CSS::ElementId; end
-
-        def initialize(@action); end
-
-        def dom_id
-          {{@type.name}}Id
-        end
+      ::Crumble::Turbo::Action.view do
+        delegate :model, to: action
 
         {{blk.body}}
-      end
-
-      def action_template : IdentifiableView
-        Template.new(self)
       end
     end
 

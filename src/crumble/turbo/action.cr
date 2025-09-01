@@ -1,3 +1,4 @@
+require "./action_template"
 require "./action_form"
 require "./custom_action_trigger"
 
@@ -37,31 +38,31 @@ module Crumble::Turbo
       end
     end
 
+    macro inherited
+      {% unless @type.abstract? %}
+        class Template < ::Crumble::Turbo::ActionTemplate
+          include IdentifiableView
+
+          getter action : ::{{@type}}
+
+          def initialize(@action); end
+
+          class Id < CSS::ElementId; end
+
+          def dom_id
+            Id
+          end
+        end
+
+        def action_template : IdentifiableView
+          Template.new(self)
+        end
+      {% end %}
+    end
+
     macro view(&blk)
-      class Template
-        include IdentifiableView
-
-        getter action : ::{{@type}}
-
-        delegate :ctx, :action_form, to: action
-
-        def initialize(@action); end
-
-        macro template(&tpl_blk)
-          ToHtml.instance_template \{{tpl_blk}}
-        end
-
-        class {{@type.name}}Id < CSS::ElementId; end
-
-        def dom_id
-          {{@type.name}}Id
-        end
-
+      class Template < ::Crumble::Turbo::ActionTemplate
         {{blk.body}}
-      end
-
-      def action_template : IdentifiableView
-        Template.new(self)
       end
     end
 

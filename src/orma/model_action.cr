@@ -1,7 +1,6 @@
 require "../crumble/turbo/action"
 require "../crumble/turbo/identifiable_view"
 require "../crumble/turbo/model_template_refresh_service"
-require "../crumble/turbo/custom_action_trigger"
 
 module Orma
   abstract class ModelAction < Crumble::Turbo::Action
@@ -72,10 +71,6 @@ module Orma
     def self.model_not_found(ctx)
       ctx.response.status_code = 404
       ctx.response << "Not Found"
-    end
-
-    def custom_action_trigger(**opts)
-      Crumble::Turbo::CustomActionTrigger.new(uri_path, **opts)
     end
 
     def controller

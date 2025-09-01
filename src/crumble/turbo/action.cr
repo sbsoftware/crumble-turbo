@@ -1,4 +1,5 @@
 require "./action_form"
+require "./custom_action_trigger"
 
 module Crumble::Turbo
   abstract class Action
@@ -66,6 +67,10 @@ module Crumble::Turbo
 
     def action_form(**opts)
       ActionForm.new(uri_path, **opts)
+    end
+
+    def custom_action_trigger(**opts)
+      Crumble::Turbo::CustomActionTrigger.new(uri_path, **opts)
     end
 
     class FormTemplate

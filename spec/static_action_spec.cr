@@ -32,9 +32,11 @@ module Crumble::Turbo::StaticActionSpec
   describe ".action_template" do
     it "returns the correct HTML" do
       expected = <<-HTML.squish
-      <form action="#{MyAction.uri_path}" method="POST">
-        <button>Start</button>
-      </form>
+      <div id="crumble--turbo--static-action-spec--my-action--template--id">
+        <form action="#{MyAction.uri_path}" method="POST">
+          <button>Start</button>
+        </form>
+      </div>
       HTML
 
       ctx = Crumble::Server::TestRequestContext.new(method: "GET", resource: "/")

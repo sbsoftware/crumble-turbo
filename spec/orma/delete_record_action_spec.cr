@@ -9,7 +9,7 @@ module DeleteRecordActionSpec
       view do
         template do
           custom_action_trigger(confirm_prompt: "Really delete?").to_html do
-            nil
+            button { "Delete!" }
           end
         end
       end
@@ -25,11 +25,15 @@ module DeleteRecordActionSpec
       mdl = MyModel.new(id: 1)
 
       expected_html = <<-HTML.squish
-      <div data-controller="orma--model-action--generic-model-action" data-orma--model-action--generic-model-action-confirm-prompt-value="Really delete?">
-        <form class="crumble--turbo--action--form-template--hidden" action="/a/delete_record_action_spec/my_model/1/remove" method="POST">
-          <input data-orma--model-action--generic-model-action-target="submit" type="submit">
-        </form>
-        <div class="orma--model-action--generic-model-action-template--inner" data-action="click->orma--model-action--generic-model-action#submit"></div>
+      <div id="delete-record-action-spec--my-model--remove-action--template--id">
+        <div data-controller="crumble--turbo--custom-action-trigger--action-trigger" data-crumble--turbo--custom-action-trigger--action-trigger-confirm-prompt-value="Really delete?">
+          <form class="crumble--turbo--action-form--hidden" action="/a/delete_record_action_spec/my_model/1/remove" method="POST">
+            <input data-crumble--turbo--custom-action-trigger--action-trigger-target="submit" type="submit">
+          </form>
+          <div class="crumble--turbo--custom-action-trigger--inner" data-action="click->crumble--turbo--custom-action-trigger--action-trigger#submit">
+            <button>Delete!</button>
+          </div>
+        </div>
       </div>
       HTML
 

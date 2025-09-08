@@ -49,8 +49,13 @@ describe "MyModel #add_child_action_template" do
   it "has a template" do
     my_model = CreateChildSpec::MyModel.new
     my_model.id = 7_i64
-    expected_html = <<-HTML
-    <form action="/a/create_child_spec/my_model/7/add_child" method="POST"><input type="text" name="name"><input type="submit" name="Add Child"></form>
+    expected_html = <<-HTML.squish
+    <div id="create-child-spec--my-model--add-child-action--template--id">
+      <form action="/a/create_child_spec/my_model/7/add_child" method="POST">
+        <input type="text" name="name">
+        <input type="submit" name="Add Child">
+      </form>
+    </div>
     HTML
 
     ctx = Crumble::Server::TestRequestContext.new

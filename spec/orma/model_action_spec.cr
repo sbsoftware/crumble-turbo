@@ -32,11 +32,14 @@ module Orma::ModelActionSpec
     it "is a renderable template" do
       my_model = Orma::ModelActionSpec::MyModel.new(id: 5_i64)
       expected = <<-HTML.squish
-      <div data-controller="orma--model-action--generic-model-action">
-        <form class="crumble--turbo--action--form-template--hidden" action="/a/orma/model_action_spec/my_model/5/inc_some_number" method="POST">
-          <input data-orma--model-action--generic-model-action-target="submit" type="submit">
-        </form>
-        <div class="orma--model-action--generic-model-action-template--inner" data-action="click->orma--model-action--generic-model-action#submit">
+      <div id="orma--model-action-spec--my-model--inc-some-number-action--template--id">
+        <div data-controller="crumble--turbo--custom-action-trigger--action-trigger">
+          <form class="crumble--turbo--action-form--hidden" action="/a/orma/model_action_spec/my_model/5/inc_some_number" method="POST">
+            <input data-crumble--turbo--custom-action-trigger--action-trigger-target="submit" type="submit">
+          </form>
+          <div class="crumble--turbo--custom-action-trigger--inner" data-action="click->crumble--turbo--custom-action-trigger--action-trigger#submit">
+            <button>Inc</button>
+          </div>
         </div>
       </div>
       HTML

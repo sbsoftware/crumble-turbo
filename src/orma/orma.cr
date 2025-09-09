@@ -31,28 +31,22 @@ class Orma::Record
 
   macro boolean_flip_action(name, attr, tpl, &blk)
     model_action({{name}}, {{tpl}}) do
+      form do
+        field {{attr.id}} : Bool, type: :hidden
+      end
+
       controller do
         return unless body = ctx.request.body
 
-        new_val = nil
-        HTTP::Params.parse(body.gets_to_end) do |name, value|
-          if name == "value"
-            new_val = (value == "true")
-          end
-        end
+        form = Form.from_www_form(body.gets_to_end)
 
-        unless new_val.nil?
-          model.{{attr.id}} = new_val
-          model.save
+        if form.valid?
+          model.update(**form.values)
         end
       end
 
-      view do
-        template do
-          action_form(hidden: true).to_html do
-            input type: :hidden, name: "value", value: (!model.{{attr.id}}.value).to_s
-          end
-        end
+      def form
+        Form.new({{attr.id}}: !model.{{attr.id}}.value)
       end
 
       {% if blk %}

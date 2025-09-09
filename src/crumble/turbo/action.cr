@@ -57,7 +57,20 @@ module Crumble::Turbo
         def action_template : IdentifiableView
           Template.new(self)
         end
+
+        class Form < ::Crumble::Form
+        end
+
+        def form
+          Form.new
+        end
       {% end %}
+    end
+
+    macro form(&blk)
+      class Form < ::Crumble::Form
+        {{blk.body}}
+      end
     end
 
     macro view(&blk)
@@ -67,11 +80,11 @@ module Crumble::Turbo
     end
 
     def action_form(**opts)
-      ActionForm.new(uri_path, **opts)
+      ActionForm.new(uri_path, form, **opts)
     end
 
     def custom_action_trigger(**opts)
-      Crumble::Turbo::CustomActionTrigger.new(uri_path, **opts)
+      Crumble::Turbo::CustomActionTrigger.new(uri_path, form, **opts)
     end
 
     class FormTemplate

@@ -22,7 +22,15 @@ module BooleanFlipSpec
       end
     end
 
-    boolean_flip_action :always_switch, :my_flag, :default_view
+    boolean_flip_action :always_switch, :my_flag, :default_view do
+      view do
+        template do
+          custom_action_trigger.to_html do
+            button { "Flip" }
+          end
+        end
+      end
+    end
 
     model_template :default_view do
       div do
@@ -37,12 +45,16 @@ describe "the switch action" do
     mdl = BooleanFlipSpec::MyModel.new(id: 77_i64, my_flag: true)
 
     expected_html = <<-HTML.split(/\n\s*/).join
-    <div data-controller="orma--model-action--generic-model-action">
-      <form class="crumble--turbo--action--form-template--hidden" action="/a/boolean_flip_spec/my_model/77/switch" method="POST">
-        <input type="hidden" name="value" value="false">
-        <input data-orma--model-action--generic-model-action-target="submit" type="submit">
-      </form>
-      <div class="orma--model-action--generic-model-action-template--inner" data-action="click->orma--model-action--generic-model-action#submit"></div>
+    <div id="boolean-flip-spec--my-model--switch-action--template--id">
+      <div data-controller="crumble--turbo--custom-action-trigger--action-trigger">
+        <form class="crumble--turbo--action-form--hidden" action="/a/boolean_flip_spec/my_model/77/switch" method="POST">
+          <input type="hidden" name="my_flag" value="false">
+          <input data-crumble--turbo--custom-action-trigger--action-trigger-target="submit" type="submit">
+        </form>
+        <div class="crumble--turbo--custom-action-trigger--inner" data-action="click->crumble--turbo--custom-action-trigger--action-trigger#submit">
+          <strong data-orma-boolean-flip-spec--my-model-id="77">something</strong>
+        </div>
+      </div>
     </div>
     HTML
 
@@ -55,7 +67,7 @@ describe "the switch action" do
     after_each { FakeDB.assert_empty! }
 
     it "flips the attribute when the before block returns true" do
-      ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/boolean_flip_spec/my_model/77/switch", body: URI::Params.encode({value: "true"}))
+      ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/boolean_flip_spec/my_model/77/switch", body: URI::Params.encode({my_flag: "true"}))
       FakeDB.expect("SELECT * FROM boolean_flip_spec_my_models WHERE id=77").set_result([{"id" => 77_i64, "my_flag" => false} of String => DB::Any])
       FakeDB.expect("UPDATE boolean_flip_spec_my_models SET my_flag=TRUE WHERE id=77")
       BooleanFlipSpec::MyModel::SwitchAction.handle(ctx)
@@ -68,12 +80,16 @@ describe "the always_switch action" do
     mdl = BooleanFlipSpec::MyModel.new(id: 71_i64, my_flag: true)
 
     expected_html = <<-HTML.split(/\n\s*/).join
-    <div data-controller="orma--model-action--generic-model-action">
-      <form class="crumble--turbo--action--form-template--hidden" action="/a/boolean_flip_spec/my_model/71/always_switch" method="POST">
-        <input type="hidden" name="value" value="false">
-        <input data-orma--model-action--generic-model-action-target="submit" type="submit">
-      </form>
-      <div class="orma--model-action--generic-model-action-template--inner" data-action="click->orma--model-action--generic-model-action#submit"></div>
+    <div id="boolean-flip-spec--my-model--always-switch-action--template--id">
+      <div data-controller="crumble--turbo--custom-action-trigger--action-trigger">
+        <form class="crumble--turbo--action-form--hidden" action="/a/boolean_flip_spec/my_model/71/always_switch" method="POST">
+          <input type="hidden" name="my_flag" value="false">
+          <input data-crumble--turbo--custom-action-trigger--action-trigger-target="submit" type="submit">
+        </form>
+        <div class="crumble--turbo--custom-action-trigger--inner" data-action="click->crumble--turbo--custom-action-trigger--action-trigger#submit">
+          <button>Flip</button>
+        </div>
+      </div>
     </div>
     HTML
 
@@ -86,7 +102,7 @@ describe "the always_switch action" do
     after_each { FakeDB.assert_empty! }
 
     it "flips the attribute" do
-      ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/boolean_flip_spec/my_model/71/always_switch", body: URI::Params.encode({value: "true"}))
+      ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/boolean_flip_spec/my_model/71/always_switch", body: URI::Params.encode({my_flag: "true"}))
       FakeDB.expect("SELECT * FROM boolean_flip_spec_my_models WHERE id=71").set_result([{"id" => 71_i64, "my_flag" => false} of String => DB::Any])
       FakeDB.expect("UPDATE boolean_flip_spec_my_models SET my_flag=TRUE WHERE id=71")
       BooleanFlipSpec::MyModel::AlwaysSwitchAction.handle(ctx)

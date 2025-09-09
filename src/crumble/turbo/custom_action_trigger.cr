@@ -3,9 +3,10 @@ require "./action_form"
 module Crumble::Turbo
   struct CustomActionTrigger
     getter uri_path : String
+    getter form : ::Crumble::Form
     getter confirm_prompt : String?
 
-    def initialize(@uri_path, *, @confirm_prompt = nil); end
+    def initialize(@uri_path, @form, *, @confirm_prompt = nil); end
 
     def confirm_prompt_value
       return unless prompt = confirm_prompt
@@ -15,7 +16,7 @@ module Crumble::Turbo
 
     ToHtml.instance_template do
       div ActionTriggerController, confirm_prompt_value do
-        ActionForm.new(uri_path, hidden: true).to_html do
+        ActionForm.new(uri_path, form, hidden: true).to_html do
           input ActionTriggerController.submit_target, type: :submit
         end
         div Inner, ActionTriggerController.submit_action("click") do

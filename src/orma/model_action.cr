@@ -1,6 +1,7 @@
 require "../crumble/turbo/action"
 require "../crumble/turbo/identifiable_view"
 require "../crumble/turbo/model_template_refresh_service"
+require "./model_action_template_id"
 
 module Orma
   abstract class ModelAction < Crumble::Turbo::Action
@@ -18,6 +19,12 @@ module Orma
     macro view(&blk)
       ::Crumble::Turbo::Action.view do
         delegate :model, to: action
+
+        def dom_id
+          raise "Cannot render action template for unpersisted model" unless model_id = model.id.try(&.value)
+
+          ::Orma::ModelActionTemplateId.new(action.class.model_class.name, model_id, action.class.action_name)
+        end
 
         {{blk.body}}
       end

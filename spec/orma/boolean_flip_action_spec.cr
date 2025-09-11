@@ -45,7 +45,7 @@ describe "the switch action" do
     mdl = BooleanFlipSpec::MyModel.new(id: 77_i64, my_flag: true)
 
     expected_html = <<-HTML.split(/\n\s*/).join
-    <div id="boolean-flip-spec--my-model--switch-action--template--id">
+    <div data-model-action-template-id="BooleanFlipSpec::MyModel#77-switch">
       <div data-controller="crumble--turbo--custom-action-trigger--action-trigger">
         <form class="crumble--turbo--action-form--hidden" action="/a/boolean_flip_spec/my_model/77/switch" method="POST">
           <input type="hidden" name="my_flag" value="false">
@@ -80,7 +80,7 @@ describe "the always_switch action" do
     mdl = BooleanFlipSpec::MyModel.new(id: 71_i64, my_flag: true)
 
     expected_html = <<-HTML.split(/\n\s*/).join
-    <div id="boolean-flip-spec--my-model--always-switch-action--template--id">
+    <div data-model-action-template-id="BooleanFlipSpec::MyModel#71-always_switch">
       <div data-controller="crumble--turbo--custom-action-trigger--action-trigger">
         <form class="crumble--turbo--action-form--hidden" action="/a/boolean_flip_spec/my_model/71/always_switch" method="POST">
           <input type="hidden" name="my_flag" value="false">

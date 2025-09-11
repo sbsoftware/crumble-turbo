@@ -43,7 +43,7 @@ module ReorderChildrenActionSpec
       child_2 = Child.create(parent_id: parent.id, name: "Two")
 
       expected = <<-HTML.squish
-      <div id="reorder-children-action-spec--parent--sort-children-action--template--id">
+      <div data-model-action-template-id="ReorderChildrenActionSpec::Parent##{parent.id}-sort_children">
         <div data-controller="reorder-children-action-spec--parent--sort-children-action--template--drag" data-action="dragstart->reorder-children-action-spec--parent--sort-children-action--template--drag#dragstart drag->reorder-children-action-spec--parent--sort-children-action--template--drag#drag dragover->reorder-children-action-spec--parent--sort-children-action--template--drag#dragover dragenter->reorder-children-action-spec--parent--sort-children-action--template--drag#dragenter drop->reorder-children-action-spec--parent--sort-children-action--template--drag#drop dragend->reorder-children-action-spec--parent--sort-children-action--template--drag#dragend">
           <form class="crumble--turbo--action-form--hidden" action="/a/reorder_children_action_spec/parent/1/sort_children" method="POST">
             <input data-reorder-children-action-spec--parent--sort-children-action--template--drag-target="subjectId" type="hidden" name="subject_id">

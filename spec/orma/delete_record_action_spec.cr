@@ -25,7 +25,7 @@ module DeleteRecordActionSpec
       mdl = MyModel.new(id: 1)
 
       expected_html = <<-HTML.squish
-      <div id="delete-record-action-spec--my-model--remove-action--template--id">
+      <div data-model-action-template-id="DeleteRecordActionSpec::MyModel#1-remove">
         <div data-controller="crumble--turbo--custom-action-trigger--action-trigger" data-crumble--turbo--custom-action-trigger--action-trigger-confirm-prompt-value="Really delete?">
           <form class="crumble--turbo--action-form--hidden" action="/a/delete_record_action_spec/my_model/1/remove" method="POST">
             <input data-crumble--turbo--custom-action-trigger--action-trigger-target="submit" type="submit">

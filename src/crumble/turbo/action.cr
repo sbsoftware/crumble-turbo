@@ -92,60 +92,6 @@ module Crumble::Turbo
       Crumble::Turbo::CustomActionTrigger.new(uri_path, form, **opts)
     end
 
-    class FormTemplate
-      struct Field
-        enum Type
-          Text
-          Hidden
-          Submit
-
-          # TODO: Check why this doesn't work with the #to_s(io : IO) overload
-          def to_s
-            super.underscore.gsub("_", "-")
-          end
-        end
-
-        getter type : Type
-        getter name : String
-        getter value : String?
-
-        def initialize(@type, @name, @value = nil); end
-
-        ToHtml.instance_template do
-          input type: type, name: name, value: value
-        end
-      end
-
-      getter uri_path : String
-      getter fields : Iterable(Field)
-      getter hidden : Bool
-
-      def initialize(@uri_path, @fields, @hidden = true); end
-
-      def initialize(@uri_path, @hidden = true)
-        @fields = [] of Field
-      end
-
-      class Hidden < CSS::CSSClass; end
-
-      class Style < CSS::Stylesheet
-        rules do
-          rule Hidden do
-            display None
-          end
-        end
-      end
-
-      ToHtml.instance_template do
-        form (Hidden if hidden), action: uri_path, method: "POST" do
-          fields.each do |field|
-            field.to_html
-          end
-          yield
-        end
-      end
-    end
-
     def self.handle(ctx) : Bool
       return false unless ctx.request.method == "POST"
       return false unless match = match_request(ctx)

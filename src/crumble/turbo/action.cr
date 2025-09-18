@@ -8,6 +8,11 @@ module Crumble::Turbo
 
     URI_PATH_PREFIX = "/a"
 
+    def initialize(ctx : ::Crumble::Server::HandlerContext)
+      @request_ctx = ctx.request_context
+      @ctx = ctx
+    end
+
     def initialize(@request_ctx); end
 
     macro inherited

@@ -30,7 +30,12 @@ module Orma
       end
     end
 
-    def initialize(@request_ctx, @model); end
+    def initialize(ctx : ::Crumble::Server::HandlerContext, @model)
+      @request_ctx = ctx.request_context
+      @ctx = ctx
+    end
+
+    def initialize(@request_ctx : ::Crumble::Server::RequestContext, @model); end
 
     def self.path_matcher : Regex
       @@path_matcher ||= /#{URI_PATH_PREFIX}\/#{model_class.name.gsub(/::/, "\\/").underscore}\/(\d+)\/#{action_name}/

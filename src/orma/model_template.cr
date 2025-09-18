@@ -6,13 +6,12 @@ require "../stimulus_controllers/model_template_refresh_controller"
 
 macro model_template(method_name, wrapper_attributes = nil, &blk)
   private class {{method_name.id.stringify.camelcase.id}}Template
+    include Crumble::ContextView
     include IdentifiableView
 
     getter model : {{@type}}
 
     forward_missing_to @model
-
-    def initialize(@model); end
 
     def dom_id
       if id = self.id
@@ -32,7 +31,7 @@ macro model_template(method_name, wrapper_attributes = nil, &blk)
     ToHtml.instance_template {{blk}}
   end
 
-  def {{method_name.id}}
-    {{method_name.id.stringify.camelcase.id}}Template.new(self)
+  def {{method_name.id}}(ctx)
+    {{method_name.id.stringify.camelcase.id}}Template.new(ctx: ctx, model: self)
   end
 end

@@ -18,7 +18,7 @@ class Orma::Record
       end
 
       def model_template : IdentifiableView
-        model.{{refreshed_model_template.id}}
+        model.{{refreshed_model_template.id}}(ctx)
       end
 
       {{blk.body}}
@@ -100,7 +100,7 @@ class Orma::Record
       end
 
       def child_view(child)
-        child.{{child_view.id}}
+        child.{{child_view.id}}(ctx)
       end
 
       {% if blk %}

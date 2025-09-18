@@ -14,7 +14,7 @@ module ReorderChildrenActionSpec
     model_template :children_view do
       div do
         children.each do |child|
-          child.default_view
+          child.default_view(ctx)
         end
       end
     end

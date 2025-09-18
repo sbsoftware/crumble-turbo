@@ -2,6 +2,7 @@ require "spec"
 require "../src/crumble-turbo"
 require "sqlite3"
 require "orma/spec/fake_db"
+require "crumble/spec/test_handler_context"
 
 TEST_DB = "./test.db"
 TEST_DB_CONNECTION_STRING = "sqlite3://#{TEST_DB}"

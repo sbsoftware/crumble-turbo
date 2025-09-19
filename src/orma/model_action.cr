@@ -14,7 +14,7 @@ module Orma
     end
 
     abstract def model
-    abstract def model_template : IdentifiableView
+    abstract def model_template
 
     macro view(&blk)
       ::Crumble::Turbo::Action.view do
@@ -68,7 +68,7 @@ module Orma
     def controller
       model_action_controller
 
-      model_template.turbo_stream.to_html(ctx.response)
+      model_template.renderer(ctx).turbo_stream.to_html(ctx.response)
       Crumble::Turbo::ModelTemplateRefreshService.notify(model_template)
     end
 

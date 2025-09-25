@@ -70,6 +70,8 @@ describe "the switch action" do
       ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/boolean_flip_spec/my_model/77/switch", body: URI::Params.encode({my_flag: "true"}))
       FakeDB.expect("SELECT * FROM boolean_flip_spec_my_models WHERE id=77").set_result([{"id" => 77_i64, "my_flag" => false} of String => DB::Any])
       FakeDB.expect("UPDATE boolean_flip_spec_my_models SET my_flag=TRUE WHERE id=77")
+      # Template refresh after action
+      FakeDB.expect("SELECT * FROM boolean_flip_spec_my_models WHERE id=77").set_result([{"id" => 77_i64, "my_flag" => true} of String => DB::Any])
       BooleanFlipSpec::MyModel::SwitchAction.handle(ctx)
     end
   end
@@ -105,6 +107,8 @@ describe "the always_switch action" do
       ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/boolean_flip_spec/my_model/71/always_switch", body: URI::Params.encode({my_flag: "true"}))
       FakeDB.expect("SELECT * FROM boolean_flip_spec_my_models WHERE id=71").set_result([{"id" => 71_i64, "my_flag" => false} of String => DB::Any])
       FakeDB.expect("UPDATE boolean_flip_spec_my_models SET my_flag=TRUE WHERE id=71")
+      # Template refresh after action
+      FakeDB.expect("SELECT * FROM boolean_flip_spec_my_models WHERE id=71").set_result([{"id" => 71_i64, "my_flag" => true} of String => DB::Any])
       BooleanFlipSpec::MyModel::AlwaysSwitchAction.handle(ctx)
     end
   end

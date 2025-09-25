@@ -4,7 +4,7 @@ require "crumble/spec/test_request_context"
 
 module ReorderChildrenActionSpec
   class Parent < Orma::Record
-    id_column id : Int32
+    id_column id : Int64
     column name : String
 
     def children
@@ -23,8 +23,8 @@ module ReorderChildrenActionSpec
   end
 
   class Child < Orma::Record
-    id_column id : Int32
-    column parent_id : Int32
+    id_column id : Int64
+    column parent_id : Int64
     column name : String
     column sort_order : Int32 = 0
 

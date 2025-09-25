@@ -69,7 +69,7 @@ module Orma
       model_action_controller
 
       model_template.renderer(ctx).turbo_stream.to_html(ctx.response)
-      Crumble::Turbo::ModelTemplateRefreshService.notify(model_template)
+      model_template.refresh!
     end
 
     abstract def model_action_controller

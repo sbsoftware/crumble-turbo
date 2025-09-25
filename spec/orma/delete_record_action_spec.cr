@@ -3,7 +3,7 @@ require "crumble/spec/test_request_context"
 
 module DeleteRecordActionSpec
   class MyModel < FakeRecord
-    id_column id : Int32
+    id_column id : Int64
 
     delete_record_action :remove, default_view do
       view do
@@ -22,7 +22,7 @@ module DeleteRecordActionSpec
 
   describe "the remove action" do
     it "provides a template" do
-      mdl = MyModel.new(id: 1)
+      mdl = MyModel.new(id: 1_i64)
 
       expected_html = <<-HTML.squish
       <div data-model-action-template-id="DeleteRecordActionSpec::MyModel#1-remove">

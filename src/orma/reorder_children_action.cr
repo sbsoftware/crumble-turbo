@@ -15,9 +15,9 @@ abstract class ReorderChildrenAction < Orma::ModelAction
     HTTP::Params.parse(body.gets_to_end) do |key, value|
       case key
       when SUBJECT_ID_FIELD_NAME
-        subject_id = value.to_i32
+        subject_id = value.to_i64
       when TARGET_ID_FIELD_NAME
-        target_id = value.to_i32
+        target_id = value.to_i64
       end
     end
 

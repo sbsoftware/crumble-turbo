@@ -57,6 +57,8 @@ module Orma::ModelActionSpec
       mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/orma/model_action_spec/my_model/7/inc_some_number")
       FakeDB.expect("SELECT * FROM #{MyModel.table_name} WHERE id=7").set_result([{"id" => 7_i64, "some_number" => 3} of String => DB::Any])
       FakeDB.expect("UPDATE #{MyModel.table_name} SET some_number=4 WHERE id=7")
+      # Template refresh after action
+      FakeDB.expect("SELECT * FROM #{MyModel.table_name} WHERE id=7").set_result([{"id" => 7_i64, "some_number" => 4} of String => DB::Any])
       MyModel::IncSomeNumberAction.handle(mock_ctx)
     end
   end

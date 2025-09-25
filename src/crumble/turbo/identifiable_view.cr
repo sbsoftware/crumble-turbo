@@ -35,6 +35,6 @@ module IdentifiableView
   end
 
   def turbo_stream
-    TurboStream.new(:replace, dom_id.selector, self)
+    TurboStream(IdentifiableView).new(:replace, dom_id.selector, self)
   end
 end

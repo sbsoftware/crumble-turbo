@@ -9,21 +9,23 @@ module Crumble
         ctx.response.headers["Connection"] = "keep-alive"
         ctx.response.headers["X-Accel-Buffering"] = "no"
 
-        channel = ModelTemplateRefreshService.subscribe(ctx.session.id.to_s)
+        channel = ModelTemplateRefreshService.subscribe(ctx)
 
         ctx.response.upgrade do |io|
-          io.as(TCPSocket).blocking = true
-          io.as(TCPSocket).sync = true
+          if io.is_a?(TCPSocket)
+            io.blocking = true
+            io.sync = true
+          end
 
           loop do
-            view = channel.receive
+            turbo_stream = channel.receive
 
             io << "data: "
-            view.turbo_stream.to_html(io)
+            turbo_stream.to_html(io)
             io << "\n\n"
             io.flush
           rescue e : IO::Error
-            ModelTemplateRefreshService.unsubscribe(ctx.session.id.to_s)
+            ModelTemplateRefreshService.unsubscribe(ctx)
 
             break
           end
@@ -41,7 +43,7 @@ module Crumble
         model_template_ids = Array(String).from_json(body.gets_to_end)
 
         model_template_ids.each do |model_template_id|
-          ModelTemplateRefreshService.register(ctx.session.id.to_s, model_template_id)
+          ModelTemplateRefreshService.register(ctx, model_template_id)
         end
       end
     end

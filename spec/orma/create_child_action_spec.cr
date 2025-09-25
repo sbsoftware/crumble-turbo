@@ -69,6 +69,8 @@ describe "MyModel #add_child_action_template" do
       mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/7/add_child", body: URI::Params.encode({name: "Bla"}))
       FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=7").set_result([{"id" => 7_i64} of String => DB::Any])
       FakeDB.expect("INSERT INTO create_child_spec_child_models(my_model_id, name, some_string) VALUES (7, 'Bla', NULL)")
+      # Template refresh after action
+      FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=7").set_result([{"id" => 7_i64} of String => DB::Any])
       CreateChildSpec::MyModel::AddChildAction.handle(mock_ctx)
     end
 
@@ -83,6 +85,8 @@ describe "MyModel #add_child_action_template" do
       mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/1/always_add_child", body: URI::Params.encode({name: "Bla"}))
       FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=1").set_result([{"id" => 1_i64} of String => DB::Any])
       FakeDB.expect("INSERT INTO create_child_spec_child_models(my_model_id, name, some_string) VALUES (1, 'Bla', '/a/create_child_spec/my_model/1/always_add_child')")
+      # Template refresh after action
+      FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=1").set_result([{"id" => 1_i64} of String => DB::Any])
       CreateChildSpec::MyModel::AlwaysAddChildAction.handle(mock_ctx)
       mock_ctx.response.status_code.should eq(201)
     end

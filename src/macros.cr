@@ -10,6 +10,10 @@ macro style(name = Style, &blk)
   end
 
   class ::ToHtml::Layout
-    append_to_head {{name.id}}
+    {% if @type == @top_level %}
+      append_to_head ::{{name.id}}
+    {% else %}
+      append_to_head ::{{@type.name(generic_args: false)}}::{{name.id}}
+    {% end %}
   end
 end

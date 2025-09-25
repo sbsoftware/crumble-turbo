@@ -15,7 +15,7 @@ module Crumble::Turbo
     end
 
     ToHtml.instance_template do
-      div ActionTriggerController, confirm_prompt_value do
+      div Outer, ActionTriggerController, confirm_prompt_value do
         ActionForm.new(uri_path, form, hidden: true).to_html do
           input ActionTriggerController.submit_target, type: :submit
         end
@@ -41,10 +41,11 @@ module Crumble::Turbo
       end
     end
 
+    css_class Outer
     css_class Inner
 
     style do
-      rule Inner do
+      rule Outer, Inner do
         width 100.percent
         height 100.percent
       end

@@ -33,7 +33,7 @@ module Orma::ModelActionSpec
       my_model = Orma::ModelActionSpec::MyModel.new(id: 5_i64)
       expected = <<-HTML.squish
       <div data-model-action-template-id="Orma::ModelActionSpec::MyModel#5-inc_some_number">
-        <div data-controller="crumble--turbo--custom-action-trigger--action-trigger">
+        <div class="crumble--turbo--custom-action-trigger--outer" data-controller="crumble--turbo--custom-action-trigger--action-trigger">
           <form class="crumble--turbo--action-form--hidden" action="/a/orma/model_action_spec/my_model/5/inc_some_number" method="POST">
             <input data-crumble--turbo--custom-action-trigger--action-trigger-target="submit" type="submit">
           </form>

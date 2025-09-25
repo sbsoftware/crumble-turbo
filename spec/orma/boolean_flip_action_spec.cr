@@ -46,7 +46,7 @@ describe "the switch action" do
 
     expected_html = <<-HTML.split(/\n\s*/).join
     <div data-model-action-template-id="BooleanFlipSpec::MyModel#77-switch">
-      <div data-controller="crumble--turbo--custom-action-trigger--action-trigger">
+      <div class="crumble--turbo--custom-action-trigger--outer" data-controller="crumble--turbo--custom-action-trigger--action-trigger">
         <form class="crumble--turbo--action-form--hidden" action="/a/boolean_flip_spec/my_model/77/switch" method="POST">
           <input type="hidden" name="my_flag" value="false">
           <input data-crumble--turbo--custom-action-trigger--action-trigger-target="submit" type="submit">
@@ -81,7 +81,7 @@ describe "the always_switch action" do
 
     expected_html = <<-HTML.split(/\n\s*/).join
     <div data-model-action-template-id="BooleanFlipSpec::MyModel#71-always_switch">
-      <div data-controller="crumble--turbo--custom-action-trigger--action-trigger">
+      <div class="crumble--turbo--custom-action-trigger--outer" data-controller="crumble--turbo--custom-action-trigger--action-trigger">
         <form class="crumble--turbo--action-form--hidden" action="/a/boolean_flip_spec/my_model/71/always_switch" method="POST">
           <input type="hidden" name="my_flag" value="false">
           <input data-crumble--turbo--custom-action-trigger--action-trigger-target="submit" type="submit">

@@ -42,60 +42,60 @@ abstract class ReorderChildrenAction < Orma::ModelAction
     ctx.response.status = :created
   end
 
+  stimulus_controller DragController do
+    targets :subject_id, :target_id, :submit
+
+    action :dragstart do |event|
+      event.dataTransfer.setData("text/plain", event.target.dataset.reorderChildrenActionSubjectId)
+      event.dataTransfer.allowedEffect = "move" # not sure if this is needed?
+    end
+
+    action :drag do |event|
+      if event.clientY > (window.outerHeight - 120) && window.scrollY < document.body.clientHeight
+        window.scrollTo({"top" => window.scrollY + 10})
+      elsif event.clientY < 120 && window.scrollY > 0
+        window.scrollTo({"top" => window.scrollY - 10})
+      end
+    end
+
+    action :dragover do |event|
+      event.preventDefault._call
+      return true
+    end
+
+    action :dragenter do |event|
+      event.preventDefault._call
+    end
+
+    action :drop do |event|
+      subject_id = event.dataTransfer.getData("text/plain")
+      draggedElement = this.element.querySelector("[data-reorder-children-action-subject-id='" + subject_id + "']")
+      target = event.target.closest("[draggable=\"true\"]")
+      target_id = target.dataset.reorderChildrenActionSubjectId
+      positionComparison = target.compareDocumentPosition(draggedElement)
+
+      this.subjectIdTarget.value = subject_id
+      this.targetIdTarget.value = target_id
+
+      if positionComparison & 4
+        target.insertAdjacentElement("beforebegin", draggedElement)
+      elsif positionComparison & 2
+        target.insertAdjacentElement("afterend", draggedElement)
+      end
+
+      event.preventDefault._call
+
+      this.submitTarget.click._call
+    end
+
+    action :dragend do
+    end
+  end
+
   macro inherited
     macro finished
       view do
         delegate :association, :child_view, to: action
-
-        stimulus_controller DragController do
-          targets :subject_id, :target_id, :submit
-
-          action :dragstart do |event|
-            event.dataTransfer.setData("text/plain", event.target.dataset.reorderChildrenActionSubjectId)
-            event.dataTransfer.allowedEffect = "move" # not sure if this is needed?
-          end
-
-          action :drag do |event|
-            if event.clientY > (window.outerHeight - 120) && window.scrollY < document.body.clientHeight
-              window.scrollTo({"top" => window.scrollY + 10})
-            elsif event.clientY < 120 && window.scrollY > 0
-              window.scrollTo({"top" => window.scrollY - 10})
-            end
-          end
-
-          action :dragover do |event|
-            event.preventDefault._call
-            return true
-          end
-
-          action :dragenter do |event|
-            event.preventDefault._call
-          end
-
-          action :drop do |event|
-            subject_id = event.dataTransfer.getData("text/plain")
-            draggedElement = this.element.querySelector("[data-reorder-children-action-subject-id='" + subject_id + "']")
-            target = event.target.closest("[draggable=\"true\"]")
-            target_id = target.dataset.reorderChildrenActionSubjectId
-            positionComparison = target.compareDocumentPosition(draggedElement)
-
-            this.subjectIdTarget.value = subject_id
-            this.targetIdTarget.value = target_id
-
-            if positionComparison & 4
-              target.insertAdjacentElement("beforebegin", draggedElement)
-            elsif positionComparison & 2
-              target.insertAdjacentElement("afterend", draggedElement)
-            end
-
-            event.preventDefault._call
-
-            this.submitTarget.click._call
-          end
-
-          action :dragend do
-          end
-        end
 
         record SubjectId, id : Int64 | Int32 | Nil do
           ToHtml.instance_tag_attrs do

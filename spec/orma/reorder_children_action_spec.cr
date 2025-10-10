@@ -44,11 +44,11 @@ module ReorderChildrenActionSpec
 
       expected = <<-HTML.squish
       <div data-model-action-template-id="ReorderChildrenActionSpec::Parent##{parent.id}-sort_children">
-        <div data-controller="reorder-children-action-spec--parent--sort-children-action--template--drag" data-action="dragstart->reorder-children-action-spec--parent--sort-children-action--template--drag#dragstart drag->reorder-children-action-spec--parent--sort-children-action--template--drag#drag dragover->reorder-children-action-spec--parent--sort-children-action--template--drag#dragover dragenter->reorder-children-action-spec--parent--sort-children-action--template--drag#dragenter drop->reorder-children-action-spec--parent--sort-children-action--template--drag#drop dragend->reorder-children-action-spec--parent--sort-children-action--template--drag#dragend">
+        <div data-controller="reorder-children-action--drag" data-action="dragstart->reorder-children-action--drag#dragstart drag->reorder-children-action--drag#drag dragover->reorder-children-action--drag#dragover dragenter->reorder-children-action--drag#dragenter drop->reorder-children-action--drag#drop dragend->reorder-children-action--drag#dragend">
           <form class="crumble--turbo--action-form--hidden" action="/a/reorder_children_action_spec/parent/1/sort_children" method="POST">
-            <input data-reorder-children-action-spec--parent--sort-children-action--template--drag-target="subjectId" type="hidden" name="subject_id">
-            <input data-reorder-children-action-spec--parent--sort-children-action--template--drag-target="targetId" type="hidden" name="target_id">
-            <input data-reorder-children-action-spec--parent--sort-children-action--template--drag-target="submit" type="submit" name="submit" value="submit">
+            <input data-reorder-children-action--drag-target="subjectId" type="hidden" name="subject_id">
+            <input data-reorder-children-action--drag-target="targetId" type="hidden" name="target_id">
+            <input data-reorder-children-action--drag-target="submit" type="submit" name="submit" value="submit">
           </form>
           <div>
             <div data-reorder-children-action-subject-id="1" draggable="true">

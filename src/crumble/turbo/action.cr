@@ -146,6 +146,11 @@ module Crumble::Turbo
       true
     end
 
+    def redirect(new_path)
+      ctx.response.status_code = 303
+      ctx.response.headers["Location"] = new_path
+    end
+
     # Crumble::Server::ViewHandler method
     def window_title : String?
       nil

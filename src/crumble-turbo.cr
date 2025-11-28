@@ -2,7 +2,6 @@ require "crumble"
 require "crumble-stimulus"
 require "crumble-orma"
 
-require "./macros"
 require "./ext/**"
 
 require "./turbo_stream"

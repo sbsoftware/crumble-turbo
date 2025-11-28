@@ -1,7 +1,7 @@
 require "../spec_helper"
 
 module Orma::ModelTemplateSpec
-  class MyClass < CSS::CSSClass; end
+  css_class MyClass
 
   class Model < Orma::Record
     id_column id : Int64?

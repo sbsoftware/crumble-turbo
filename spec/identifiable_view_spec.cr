@@ -1,8 +1,8 @@
 require "./spec_helper"
 
 module IdentifiableViewSpec
-  class MyId < CSS::ElementId; end
-  class MyClass < CSS::CSSClass; end
+  css_id MyId
+  css_class MyClass
 
   class View
     include IdentifiableView

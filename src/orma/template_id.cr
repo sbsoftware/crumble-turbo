@@ -6,7 +6,7 @@ module Orma::TemplateId
   def initialize(@model_class, @model_id, @template_name); end
 
   macro included
-    def selector
+    def to_css_selector
       CSS::AttrSelector.new(ATTR_NAME, attr_value)
     end
 

@@ -18,7 +18,7 @@ module Crumble::Turbo
 
     style do
       rule Hidden do
-        display None
+        display :none
       end
     end
   end

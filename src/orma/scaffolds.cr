@@ -170,27 +170,99 @@ module Orma
     struct Accessible::ShareElement(T)
       getter model : T
 
+      # CSS helpers for the share tooltip
+      css_class ShareContainer
+      css_class ShareTooltip
+      css_class ShareTooltipVisible
+
       def initialize(@model); end
 
       ToHtml.instance_template do
-        div ShareController, ShareController.share_action("click"), ShareController.url_value(model.share_uri) do
+        div ShareController, ShareController.share_action("click"), ShareController.url_value(model.share_uri), ShareContainer do
           yield
+          span ShareController.tooltip_target, ShareTooltip do
+            "Link copied!"
+          end
         end
       end
 
       stimulus_controller ShareController do
         values url: String
+        targets :tooltip
 
         action :share do |event|
           event.preventDefault._call
 
+          this.hideTooltip._call
+
+          that = this
+
           if navigator.share
             navigator.share({text: this.urlValue})
           elsif navigator.clipboard
-            navigator.clipboard.writeText(this.urlValue)
+            navigator.clipboard.writeText(this.urlValue).then do
+              that.showCopiedTooltip._call
+            end.catch do
+              window.alert("Sharing not supported on this device. " + that.urlValue)
+            end
           else
             window.alert("Sharing not supported on this device. " + this.urlValue)
           end
+        end
+
+        js_method :showCopiedTooltip do
+          return unless this.tooltipTarget
+
+          if this.hideTimeout
+            clearTimeout(this.hideTimeout)
+          end
+
+          this.tooltipTarget.classList.add(::Orma::Record::Accessible::ShareElement::ShareTooltipVisible)
+
+          hideCallback = -> {
+            this.hideTooltip._call
+          }
+
+          this.hideTimeout = setTimeout(hideCallback, 2500)
+        end
+
+        js_method :hideTooltip do
+          if this.tooltipTarget
+            this.tooltipTarget.classList.remove(::Orma::Record::Accessible::ShareElement::ShareTooltipVisible)
+          end
+
+          if this.hideTimeout
+            clearTimeout(this.hideTimeout)
+            _literal_js("this.hideTimeout = undefined;")
+          end
+        end
+      end
+
+      style do
+        rule ShareContainer do
+          position :relative
+          display :inline_block
+        end
+
+        rule ShareTooltip do
+          display :none
+          position :absolute
+          z_index 1000
+          top 100.percent
+          margin_top 0.35.rem
+          left 50.percent
+          transform translate_x(-50.percent)
+          padding 0.25.rem, 0.5.rem
+          background_color "#16a34a"
+          color "#ffffff"
+          border_radius 0.35.rem
+          font_size 0.85.rem
+          box_shadow rgb(0, 0, 0, alpha: 0.15), 0, 2.px, 6.px
+          white_space :nowrap
+        end
+
+        rule ShareTooltipVisible do
+          display :inline_block
         end
       end
     end

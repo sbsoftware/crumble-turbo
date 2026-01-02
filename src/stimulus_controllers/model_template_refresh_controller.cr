@@ -11,7 +11,8 @@ module Crumble
 
         that = this
         this.evt_source.addEventListener("open") do
-          that.register_model_templates(true)
+          that.connected = true
+          that.register_model_templates._call
         end
       end
 
@@ -28,10 +29,10 @@ module Crumble
           return elem.dataset["modelTemplateId"]
         end.sort._call
 
-        model_template_ids_changed = this.model_template_ids.length != model_template_ids.length
+        model_template_ids_changed = (this.model_template_ids.length != model_template_ids.length)
         unless model_template_ids_changed
           model_template_ids_changed = this.model_template_ids.every do |index, value|
-            model_template_ids[index] == value
+            return model_template_ids[index] == value
           end
         end
 
@@ -49,11 +50,11 @@ module Crumble
       end
 
       js_method :modelTemplateTargetConnected do
-        this.register_model_templates._call
+        this.register_model_templates._call if this.connected
       end
 
       js_method :modelTemplateTargetDisconnected do
-        this.register_model_templates._call
+        this.register_model_templates._call if this.connected
       end
     end
   end

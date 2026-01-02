@@ -14,7 +14,10 @@ module Orma
     end
 
     abstract def model
-    abstract def model_template
+
+    # Model templates that should be streamed to the requester and refreshed for
+    # other subscribers after the action controller runs.
+    abstract def refreshed_model_templates
 
     macro view(&blk)
       ::Crumble::Turbo::Action.view do
@@ -68,8 +71,10 @@ module Orma
     def controller
       model_action_controller
 
-      model_template.renderer(ctx).turbo_stream.to_html(ctx.response)
-      model_template.refresh!
+      refreshed_model_templates.each do |tpl|
+        tpl.renderer(ctx).turbo_stream.to_html(ctx.response)
+        tpl.refresh!
+      end
     end
 
     abstract def model_action_controller

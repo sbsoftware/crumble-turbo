@@ -13,7 +13,27 @@ module Orma::ModelActionSpec
       end
     end
 
+    model_template :some_number_view_plus_one do
+      div do
+        some_number + 1
+      end
+    end
+
     model_action :inc_some_number, some_number_view do
+      controller do
+        model.update(some_number: model.some_number.value + 1)
+      end
+
+      view do
+        template do
+          custom_action_trigger.to_html do
+            button { "Inc" }
+          end
+        end
+      end
+    end
+
+    model_action :inc_some_number_multi, {some_number_view, some_number_view_plus_one} do
       controller do
         model.update(some_number: model.some_number.value + 1)
       end
@@ -60,6 +80,16 @@ module Orma::ModelActionSpec
       # Template refresh after action
       FakeDB.expect("SELECT * FROM #{MyModel.table_name} WHERE id=7").set_result([{"id" => 7_i64, "some_number" => 4} of String => DB::Any])
       MyModel::IncSomeNumberAction.handle(mock_ctx)
+    end
+
+    it "refreshes all templates when the tpl argument is enumerable" do
+      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/orma/model_action_spec/my_model/7/inc_some_number_multi")
+      FakeDB.expect("SELECT * FROM #{MyModel.table_name} WHERE id=7").set_result([{"id" => 7_i64, "some_number" => 3} of String => DB::Any])
+      FakeDB.expect("UPDATE #{MyModel.table_name} SET some_number=4 WHERE id=7")
+      # Template refresh after action (one refresh per model template)
+      FakeDB.expect("SELECT * FROM #{MyModel.table_name} WHERE id=7").set_result([{"id" => 7_i64, "some_number" => 4} of String => DB::Any])
+      FakeDB.expect("SELECT * FROM #{MyModel.table_name} WHERE id=7").set_result([{"id" => 7_i64, "some_number" => 4} of String => DB::Any])
+      MyModel::IncSomeNumberMultiAction.handle(mock_ctx)
     end
   end
 end

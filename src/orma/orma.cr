@@ -17,8 +17,25 @@ class Orma::Record
         {{@type.resolve}}
       end
 
-      def model_template
-        model.{{refreshed_model_template.id}}
+      def refreshed_model_templates
+        {% tpl_expr = refreshed_model_template %}
+        {% if tpl_expr.is_a?(Path) %}
+          {% tpl_expr = tpl_expr.resolve %}
+        {% end %}
+
+        {
+          {% if tpl_expr.is_a?(ArrayLiteral) || tpl_expr.is_a?(TupleLiteral) %}
+            {% if tpl_expr.size == 0 %}
+              {% tpl_expr.raise "model_action tpl must not be empty" %}
+            {% end %}
+
+            {% for tpl in tpl_expr %}
+              model.{{tpl.id}},
+            {% end %}
+          {% else %}
+            model.{{tpl_expr.id}},
+          {% end %}
+        }
       end
 
       {{blk.body}}

@@ -17,6 +17,9 @@ module Crumble
             io.sync = true
           end
 
+          io << ": connected\n\n"
+          io.flush
+
           loop do
             turbo_stream = channel.receive
 

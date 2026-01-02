@@ -29,7 +29,6 @@ module Crumble
 
             break
           end
-
         rescue Channel::ClosedError
         ensure
           channel.close
@@ -44,6 +43,7 @@ module Crumble
 
         model_template_ids.each do |model_template_id|
           ModelTemplateRefreshService.register(ctx, model_template_id)
+          ModelTemplateRefreshService.refresh_model_template_id(model_template_id, only: ctx.session.id)
         end
       end
     end

@@ -13,7 +13,7 @@ module Crumble
 
         ctx.response.upgrade do |io|
           if io.is_a?(TCPSocket)
-            io.blocking = true
+            Socket.set_blocking(io.fd, true)
             io.sync = true
           end
 

@@ -104,7 +104,7 @@ module Orma
         end
 
         def form
-          Form.new(access_token: model.access_token.value)
+          Form.new(ctx, access_token: model.access_token.value)
         end
 
         controller do
@@ -113,7 +113,7 @@ module Orma
             return
           end
 
-          form = Form.from_www_form(body.gets_to_end)
+          form = Form.from_www_form(ctx, body.gets_to_end)
 
           unless form.access_token == model.access_token.value
             ctx.response.status_code = 400

@@ -55,7 +55,7 @@ class Orma::Record
       controller do
         return unless body = ctx.request.body
 
-        form = Form.from_www_form(body.gets_to_end)
+        form = Form.from_www_form(ctx, body.gets_to_end)
 
         if form.valid?
           model.update(**form.values)
@@ -63,7 +63,7 @@ class Orma::Record
       end
 
       def form
-        Form.new({{attr.id}}: !model.{{attr.id}}.value)
+        Form.new(ctx, {{attr.id}}: !model.{{attr.id}}.value)
       end
 
       {% if blk %}

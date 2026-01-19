@@ -22,7 +22,7 @@ module Crumble::Turbo::ActionRegistrySpec
         res = HTTP::Server::Response.new(res_io)
         ctx = HTTP::Server::Context.new(request: req, response: res)
 
-        Crumble::Server::RootRequestHandler.new.call(ctx)
+        Crumble::Server::RequestDispatcher.new.call(ctx)
 
         ctx.response.flush
       end

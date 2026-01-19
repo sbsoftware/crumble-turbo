@@ -67,7 +67,7 @@ module Crumble::Turbo
         end
 
         def form
-          Form.new
+          Form.new(ctx)
         end
       {% end %}
     end

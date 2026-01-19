@@ -61,7 +61,8 @@ describe "MyModel #add_child_action_template" do
     expected_html = <<-HTML.squish
     <div data-model-action-template-id="CreateChildSpec::MyModel#7-add_child">
       <form action="/a/create_child_spec/my_model/7/add_child" method="POST">
-        <input type="text" name="name" value="">
+        <label for="create-child-spec--my-model--add-child-action--form--name-field-id">Name</label>
+        <input id="create-child-spec--my-model--add-child-action--form--name-field-id" type="text" name="name" value="">
         <input type="submit" name="Add Child">
       </form>
     </div>

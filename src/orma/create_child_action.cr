@@ -15,7 +15,7 @@ module Orma
 
     macro inherited
       def create_params(request_body : String)
-        form = Form.from_www_form(request_body)
+        form = Form.from_www_form(ctx, request_body)
 
         parent_params.merge(form.values).merge(context_params)
       end

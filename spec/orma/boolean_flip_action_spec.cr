@@ -48,7 +48,8 @@ describe "the switch action" do
     <div data-model-action-template-id="BooleanFlipSpec::MyModel#77-switch">
       <div class="crumble--turbo--custom-action-trigger--outer" data-controller="crumble--turbo--custom-action-trigger--action-trigger">
         <form class="crumble--turbo--action-form--hidden" action="/a/boolean_flip_spec/my_model/77/switch" method="POST">
-          <input type="hidden" name="my_flag" value="false">
+          <label for="boolean-flip-spec--my-model--switch-action--form--my-flag-field-id">My_flag</label>
+          <input id="boolean-flip-spec--my-model--switch-action--form--my-flag-field-id" type="hidden" name="my_flag" value="false">
           <input data-crumble--turbo--custom-action-trigger--action-trigger-target="submit" type="submit">
         </form>
         <div class="crumble--turbo--custom-action-trigger--inner" data-action="click->crumble--turbo--custom-action-trigger--action-trigger#submit">
@@ -85,7 +86,8 @@ describe "the always_switch action" do
     <div data-model-action-template-id="BooleanFlipSpec::MyModel#71-always_switch">
       <div class="crumble--turbo--custom-action-trigger--outer" data-controller="crumble--turbo--custom-action-trigger--action-trigger">
         <form class="crumble--turbo--action-form--hidden" action="/a/boolean_flip_spec/my_model/71/always_switch" method="POST">
-          <input type="hidden" name="my_flag" value="false">
+          <label for="boolean-flip-spec--my-model--always-switch-action--form--my-flag-field-id">My_flag</label>
+          <input id="boolean-flip-spec--my-model--always-switch-action--form--my-flag-field-id" type="hidden" name="my_flag" value="false">
           <input data-crumble--turbo--custom-action-trigger--action-trigger-target="submit" type="submit">
         </form>
         <div class="crumble--turbo--custom-action-trigger--inner" data-action="click->crumble--turbo--custom-action-trigger--action-trigger#submit">

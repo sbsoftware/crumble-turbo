@@ -43,7 +43,7 @@ module Crumble
             Crumble::Turbo::ModelTemplateRefreshResource.uri_path.to_js_ref,
             {
               "method" => "POST",
-              "body" => JSON.stringify(model_template_ids)
+              "body"   => JSON.stringify(model_template_ids),
             }
           )
         end

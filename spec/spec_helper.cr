@@ -1,21 +1,9 @@
 require "spec"
 require "../src/crumble-turbo"
 require "sqlite3"
-require "orma/spec/fake_db"
 require "crumble/spec/test_handler_context"
 
-TEST_DB = "./test.db"
-TEST_DB_CONNECTION_STRING = "sqlite3://#{TEST_DB}"
-
-if File.exists?(TEST_DB)
-  File.delete(TEST_DB)
-end
-
-class Orma::Record
-  def self.db_connection_string
-    TEST_DB_CONNECTION_STRING
-  end
-end
+TEST_DB_CONNECTION_STRING = "sqlite3:%3Amemory%3A?max_pool_size=1"
 
 class String
   def squish
@@ -23,17 +11,14 @@ class String
   end
 end
 
-# TODO: Require this directly from orma
-abstract class FakeRecord < Orma::Record
+abstract class TestRecord < Orma::Record
   macro inherited
-    id_column id : Int64
+    {% unless @type.abstract? %}
+      self.continuous_migration!
+    {% end %}
   end
 
-  def self.db
-    FakeDB
-  end
-
-  def self.continuous_migration!
-    # noop
+  def self.db_connection_string
+    ::TEST_DB_CONNECTION_STRING
   end
 end

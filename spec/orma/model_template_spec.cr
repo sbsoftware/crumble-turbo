@@ -4,7 +4,7 @@ module Orma::ModelTemplateSpec
   css_class MyClass
 
   class Model < Orma::Record
-    id_column id : Int64?
+    id_column id : Int64
     column name : String?
 
     model_template :default_model_template do
@@ -28,8 +28,7 @@ module Orma::ModelTemplateSpec
 
   describe "a model defining a model template" do
     it "has a method returning a template with a model template wrapper" do
-      mdl = Model.new
-      mdl.id = 65_i64
+      mdl = Model.new(id: 65_i64)
       mdl.name = "Pavel"
       expected_html = <<-HTML
       <div data-model-template-id="Orma::ModelTemplateSpec::Model#65-default_model_template" data-crumble--turbo--model-template-refresh-target="modelTemplate"><strong>Pavel</strong></div>
@@ -39,8 +38,7 @@ module Orma::ModelTemplateSpec
     end
 
     it "can provide additional wrapper element attributes" do
-      mdl = Model.new
-      mdl.id = 50_i64
+      mdl = Model.new(id: 50_i64)
       expected_html = <<-HTML.squish
       <div data-model-template-id="Orma::ModelTemplateSpec::Model#50-model_tpl_with_class" data-crumble--turbo--model-template-refresh-target="modelTemplate" class="orma--model-template-spec--my-class">
         <i>50</i>
@@ -52,8 +50,7 @@ module Orma::ModelTemplateSpec
 
   describe "a model template" do
     it "returns a valid turbo stream template" do
-      mdl = Model.new
-      mdl.id = 66_i64
+      mdl = Model.new(id: 66_i64)
       mdl.name = "Bronko"
 
       expected_html = <<-HTML
@@ -64,8 +61,7 @@ module Orma::ModelTemplateSpec
     end
 
     it "can be used within a layout" do
-      mdl = Model.new
-      mdl.id = 67_i64
+      mdl = Model.new(id: 67_i64)
       mdl.name = "Woody"
 
       expected_html = <<-HTML.squish

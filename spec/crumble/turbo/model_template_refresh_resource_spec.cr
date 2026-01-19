@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
 module Crumble::Turbo::ModelTemplateRefreshResourceSpec
-  class MyModel < ::Orma::Record
+  class MyModel < TestRecord
     id_column id : Int64
     column name : String
 
@@ -14,12 +14,8 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
   end
 
   describe "when an SSE connection is open" do
-    before_each do
-      MyModel.continuous_migration!
-    end
-
     it "should initially refresh registered model templates" do
-      model = MyModel.create(id: 14_i64, name: "Yoda")
+      model = MyModel.create(name: "Yoda")
 
       session_store = ::Crumble::Server::MemorySessionStore.new
       session = ::Crumble::Server::Session.new
@@ -48,9 +44,9 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
       end
 
       expected_html = <<-HTML.squish
-      <turbo-stream action="replace" targets="[data-model-template-id='Crumble::Turbo::ModelTemplateRefreshResourceSpec::MyModel#14-the_view']">
+      <turbo-stream action="replace" targets="[data-model-template-id='Crumble::Turbo::ModelTemplateRefreshResourceSpec::MyModel##{model.id.value}-the_view']">
         <template>
-          <div data-model-template-id="Crumble::Turbo::ModelTemplateRefreshResourceSpec::MyModel#14-the_view" data-crumble--turbo--model-template-refresh-target="modelTemplate">
+          <div data-model-template-id="Crumble::Turbo::ModelTemplateRefreshResourceSpec::MyModel##{model.id.value}-the_view" data-crumble--turbo--model-template-refresh-target="modelTemplate">
             <div>
               <span>Yoda</span>
               <span>#{ModelTemplateRefreshResource.uri_path}</span>
@@ -64,7 +60,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
     end
 
     it "should receive a model template refresh turbo stream" do
-      model = MyModel.create(id: 13_i64, name: "Yoda")
+      model = MyModel.create(name: "Yoda")
 
       session_store = ::Crumble::Server::MemorySessionStore.new
       session = ::Crumble::Server::Session.new
@@ -95,9 +91,9 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
       end
 
       expected_html = <<-HTML.squish
-      <turbo-stream action="replace" targets="[data-model-template-id='Crumble::Turbo::ModelTemplateRefreshResourceSpec::MyModel#13-the_view']">
+      <turbo-stream action="replace" targets="[data-model-template-id='Crumble::Turbo::ModelTemplateRefreshResourceSpec::MyModel##{model.id.value}-the_view']">
         <template>
-          <div data-model-template-id="Crumble::Turbo::ModelTemplateRefreshResourceSpec::MyModel#13-the_view" data-crumble--turbo--model-template-refresh-target="modelTemplate">
+          <div data-model-template-id="Crumble::Turbo::ModelTemplateRefreshResourceSpec::MyModel##{model.id.value}-the_view" data-crumble--turbo--model-template-refresh-target="modelTemplate">
             <div>
               <span>Yoda</span>
               <span>#{ModelTemplateRefreshResource.uri_path}</span>

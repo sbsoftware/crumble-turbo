@@ -23,7 +23,7 @@ module Orma
     # NOTE: This macro is about sharing and granting access, not about restricting it. Any Resource showing this model has to be made aware of any restrictions by other means.
     #
     # Example usage:
-    # ```crystal
+    # ```
     # class GroupMember < ApplicationRecord
     #   column session_id : String
     # end

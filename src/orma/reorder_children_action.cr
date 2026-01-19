@@ -2,7 +2,7 @@ require "./model_action"
 
 abstract class ReorderChildrenAction < Orma::ModelAction
   SUBJECT_ID_FIELD_NAME = "subject_id"
-  TARGET_ID_FIELD_NAME = "target_id"
+  TARGET_ID_FIELD_NAME  = "target_id"
 
   controller do
     unless body = ctx.request.body

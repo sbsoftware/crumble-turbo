@@ -1,10 +1,9 @@
 require "../spec_helper"
-require "orma/spec/fake_db"
 require "crumble/spec/test_request_context"
 
 module Orma::ModelActionSpec
-  class MyModel < FakeRecord
-    id_column id : Int64?
+  class MyModel < TestRecord
+    id_column id : Int64
     column some_number : Int32 = 0
 
     model_template :some_number_view do
@@ -70,26 +69,22 @@ module Orma::ModelActionSpec
   end
 
   describe "when handling a request" do
-    before_each { FakeDB.reset }
-    after_each { FakeDB.assert_empty! }
-
     it "executes the controller" do
-      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/orma/model_action_spec/my_model/7/inc_some_number")
-      FakeDB.expect("SELECT * FROM #{MyModel.table_name} WHERE id=7").set_result([{"id" => 7_i64, "some_number" => 3} of String => DB::Any])
-      FakeDB.expect("UPDATE #{MyModel.table_name} SET some_number=4 WHERE id=7")
-      # Template refresh after action
-      FakeDB.expect("SELECT * FROM #{MyModel.table_name} WHERE id=7").set_result([{"id" => 7_i64, "some_number" => 4} of String => DB::Any])
+      model = Orma::ModelActionSpec::MyModel.create(some_number: 3)
+      model_id = model.id.value
+      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/orma/model_action_spec/my_model/#{model_id}/inc_some_number")
       MyModel::IncSomeNumberAction.handle(mock_ctx)
+
+      Orma::ModelActionSpec::MyModel.find(model_id).some_number.value.should eq(4)
     end
 
     it "refreshes all templates when the tpl argument is enumerable" do
-      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/orma/model_action_spec/my_model/7/inc_some_number_multi")
-      FakeDB.expect("SELECT * FROM #{MyModel.table_name} WHERE id=7").set_result([{"id" => 7_i64, "some_number" => 3} of String => DB::Any])
-      FakeDB.expect("UPDATE #{MyModel.table_name} SET some_number=4 WHERE id=7")
-      # Template refresh after action (one refresh per model template)
-      FakeDB.expect("SELECT * FROM #{MyModel.table_name} WHERE id=7").set_result([{"id" => 7_i64, "some_number" => 4} of String => DB::Any])
-      FakeDB.expect("SELECT * FROM #{MyModel.table_name} WHERE id=7").set_result([{"id" => 7_i64, "some_number" => 4} of String => DB::Any])
+      model = Orma::ModelActionSpec::MyModel.create(some_number: 3)
+      model_id = model.id.value
+      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/orma/model_action_spec/my_model/#{model_id}/inc_some_number_multi")
       MyModel::IncSomeNumberMultiAction.handle(mock_ctx)
+
+      Orma::ModelActionSpec::MyModel.find(model_id).some_number.value.should eq(4)
     end
   end
 end

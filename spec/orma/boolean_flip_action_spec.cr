@@ -2,13 +2,14 @@ require "../spec_helper"
 require "crumble/spec/test_request_context"
 
 module BooleanFlipSpec
-  class MyModel < FakeRecord
-    id_column id : Int64?
+  class MyModel < TestRecord
+    id_column id : Int64
     column my_flag : Bool
+    column name : String?
 
     boolean_flip_action :switch, :my_flag, :default_view do
       before do
-        model.id == 77_i64
+        model.name.try(&.value) == "Allowed"
       end
 
       view do
@@ -64,16 +65,13 @@ describe "the switch action" do
   end
 
   describe "when handling a request" do
-    before_each { FakeDB.reset }
-    after_each { FakeDB.assert_empty! }
-
     it "flips the attribute when the before block returns true" do
-      ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/boolean_flip_spec/my_model/77/switch", body: URI::Params.encode({my_flag: "true"}))
-      FakeDB.expect("SELECT * FROM boolean_flip_spec_my_models WHERE id=77").set_result([{"id" => 77_i64, "my_flag" => false} of String => DB::Any])
-      FakeDB.expect("UPDATE boolean_flip_spec_my_models SET my_flag=TRUE WHERE id=77")
-      # Template refresh after action
-      FakeDB.expect("SELECT * FROM boolean_flip_spec_my_models WHERE id=77").set_result([{"id" => 77_i64, "my_flag" => true} of String => DB::Any])
+      model = BooleanFlipSpec::MyModel.create(my_flag: false, name: "Allowed")
+      model_id = model.id.value
+      ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/boolean_flip_spec/my_model/#{model_id}/switch", body: URI::Params.encode({my_flag: "true"}))
       BooleanFlipSpec::MyModel::SwitchAction.handle(ctx)
+
+      BooleanFlipSpec::MyModel.find(model_id).my_flag.value.should be_true
     end
   end
 end
@@ -102,16 +100,13 @@ describe "the always_switch action" do
   end
 
   describe "when handling a request" do
-    before_each { FakeDB.reset }
-    after_each { FakeDB.assert_empty! }
-
     it "flips the attribute" do
-      ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/boolean_flip_spec/my_model/71/always_switch", body: URI::Params.encode({my_flag: "true"}))
-      FakeDB.expect("SELECT * FROM boolean_flip_spec_my_models WHERE id=71").set_result([{"id" => 71_i64, "my_flag" => false} of String => DB::Any])
-      FakeDB.expect("UPDATE boolean_flip_spec_my_models SET my_flag=TRUE WHERE id=71")
-      # Template refresh after action
-      FakeDB.expect("SELECT * FROM boolean_flip_spec_my_models WHERE id=71").set_result([{"id" => 71_i64, "my_flag" => true} of String => DB::Any])
+      model = BooleanFlipSpec::MyModel.create(my_flag: false)
+      model_id = model.id.value
+      ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/boolean_flip_spec/my_model/#{model_id}/always_switch", body: URI::Params.encode({my_flag: "true"}))
       BooleanFlipSpec::MyModel::AlwaysSwitchAction.handle(ctx)
+
+      BooleanFlipSpec::MyModel.find(model_id).my_flag.value.should be_true
     end
   end
 end

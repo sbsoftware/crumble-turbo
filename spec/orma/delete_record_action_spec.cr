@@ -2,7 +2,7 @@ require "../spec_helper"
 require "crumble/spec/test_request_context"
 
 module DeleteRecordActionSpec
-  class MyModel < FakeRecord
+  class MyModel < TestRecord
     id_column id : Int64
 
     delete_record_action :remove, default_view do

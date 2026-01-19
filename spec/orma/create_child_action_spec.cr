@@ -3,19 +3,20 @@ require "uri"
 require "crumble/spec/test_request_context"
 
 module CreateChildSpec
-  class ChildModel < FakeRecord
+  class ChildModel < TestRecord
     id_column id : Int64
     column my_model_id : Int64
     column name : String?
     column some_string : String?
   end
 
-  class MyModel < FakeRecord
+  class MyModel < TestRecord
     id_column id : Int64
+    column name : String?
 
     create_child_action :add_child, ChildModel, my_model_id, default_view do
       before do
-        model.id == 7_i64
+        model.name.try(&.value) == "Allowed"
       end
 
       form do
@@ -73,33 +74,33 @@ describe "MyModel #add_child_action_template" do
   end
 
   context "when handling a request" do
-    before_each { FakeDB.reset }
-    after_each { FakeDB.assert_empty! }
-
     it "creates a new ChildModel when the before block returns true" do
-      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/7/add_child", body: URI::Params.encode({name: "Bla"}))
-      FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=7").set_result([{"id" => 7_i64} of String => DB::Any])
-      FakeDB.expect("INSERT INTO create_child_spec_child_models(my_model_id, name) VALUES (7, 'Bla')")
-      # Template refresh after action
-      FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=7").set_result([{"id" => 7_i64} of String => DB::Any])
+      model = CreateChildSpec::MyModel.create(name: "Allowed")
+      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/add_child", body: URI::Params.encode({name: "Bla"}))
       CreateChildSpec::MyModel::AddChildAction.handle(mock_ctx)
+
+      child = CreateChildSpec::ChildModel.where(my_model_id: model.id.value).first
+      child.name.try(&.value).should eq("Bla")
     end
 
     it "returns 400 when the before block returns false" do
-      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/2/add_child", body: URI::Params.encode({name: "Bla"}))
-      FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=2").set_result([{"id" => 2_i64} of String => DB::Any])
+      model = CreateChildSpec::MyModel.create(name: "Blocked")
+      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/add_child", body: URI::Params.encode({name: "Bla"}))
+      before_count = CreateChildSpec::ChildModel.all.count
       CreateChildSpec::MyModel::AddChildAction.handle(mock_ctx)
       mock_ctx.response.status_code.should eq(400)
+      CreateChildSpec::ChildModel.all.count.should eq(before_count)
     end
 
     it "creates a new ChildModel when there is no before block" do
-      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/1/always_add_child", body: URI::Params.encode({name: "Bla"}))
-      FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=1").set_result([{"id" => 1_i64} of String => DB::Any])
-      FakeDB.expect("INSERT INTO create_child_spec_child_models(my_model_id, name, some_string) VALUES (1, 'Bla', '/a/create_child_spec/my_model/1/always_add_child')")
-      # Template refresh after action
-      FakeDB.expect("SELECT * FROM create_child_spec_my_models WHERE id=1").set_result([{"id" => 1_i64} of String => DB::Any])
+      model = CreateChildSpec::MyModel.create(name: "Parent")
+      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/always_add_child", body: URI::Params.encode({name: "Bla"}))
       CreateChildSpec::MyModel::AlwaysAddChildAction.handle(mock_ctx)
       mock_ctx.response.status_code.should eq(201)
+
+      child = CreateChildSpec::ChildModel.where(my_model_id: model.id.value).first
+      child.name.try(&.value).should eq("Bla")
+      child.some_string.try(&.value).should eq("/a/create_child_spec/my_model/#{model.id.value}/always_add_child")
     end
   end
 end

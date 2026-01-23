@@ -24,5 +24,6 @@ dependencies:
     github: crystal-lang/crystal-sqlite3
   crumble-orma:
     github: sbsoftware/crumble-orma
+    version: ">= 0.3.1"
   base58:
     github: wyhaines/base58.cr

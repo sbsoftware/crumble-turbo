@@ -100,7 +100,7 @@ module Orma
 
       model_action :accept_access, {{refreshed_template}} do
         form do
-          field access_token : String, type: :hidden
+          field access_token : String, type: :hidden, label: nil
         end
 
         def form

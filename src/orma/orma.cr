@@ -23,19 +23,23 @@ class Orma::Record
           {% tpl_expr = tpl_expr.resolve %}
         {% end %}
 
-        {
-          {% if tpl_expr.is_a?(ArrayLiteral) || tpl_expr.is_a?(TupleLiteral) %}
-            {% if tpl_expr.size == 0 %}
-              {% tpl_expr.raise "model_action tpl must not be empty" %}
-            {% end %}
+        {% if tpl_expr.is_a?(NilLiteral) %}
+          nil
+        {% else %}
+          {
+            {% if tpl_expr.is_a?(ArrayLiteral) || tpl_expr.is_a?(TupleLiteral) %}
+              {% if tpl_expr.size == 0 %}
+                {% tpl_expr.raise "model_action tpl must not be empty" %}
+              {% end %}
 
-            {% for tpl in tpl_expr %}
-              model.{{tpl.id}},
+              {% for tpl in tpl_expr %}
+                model.{{tpl.id}},
+              {% end %}
+            {% else %}
+              model.{{tpl_expr.id}},
             {% end %}
-          {% else %}
-            model.{{tpl_expr.id}},
-          {% end %}
-        }
+          }
+        {% end %}
       end
 
       {{blk.body}}

@@ -45,6 +45,20 @@ module Orma::ModelActionSpec
         end
       end
     end
+
+    model_action :inc_some_number_no_refresh, nil do
+      controller do
+        model.update(some_number: model.some_number.value + 1)
+      end
+
+      view do
+        template do
+          custom_action_trigger.to_html do
+            button { "Inc" }
+          end
+        end
+      end
+    end
   end
 
   describe "MyModel#inc_some_number_action_template" do
@@ -85,6 +99,20 @@ module Orma::ModelActionSpec
       MyModel::IncSomeNumberMultiAction.handle(mock_ctx)
 
       Orma::ModelActionSpec::MyModel.find(model_id).some_number.value.should eq(4)
+    end
+
+    it "does not refresh templates when the tpl argument is nil" do
+      model = Orma::ModelActionSpec::MyModel.create(some_number: 3)
+      model_id = model.id.value
+      res = String.build do |io|
+        mock_ctx = Crumble::Server::TestRequestContext.new(response_io: io, method: "POST", resource: "/a/orma/model_action_spec/my_model/#{model_id}/inc_some_number_no_refresh")
+        MyModel::IncSomeNumberNoRefreshAction.handle(mock_ctx)
+        mock_ctx.response.flush
+      end
+
+      Orma::ModelActionSpec::MyModel.find(model_id).some_number.value.should eq(4)
+      res.should_not contain("data-model-template-id")
+      res.should contain("data-model-action-template-id")
     end
   end
 end

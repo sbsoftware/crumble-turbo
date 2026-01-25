@@ -71,9 +71,11 @@ module Orma
     def controller
       model_action_controller
 
-      refreshed_model_templates.each do |tpl|
-        tpl.renderer(ctx).turbo_stream.to_html(ctx.response)
-        tpl.refresh!
+      if templates = refreshed_model_templates
+        templates.each do |tpl|
+          tpl.renderer(ctx).turbo_stream.to_html(ctx.response)
+          tpl.refresh!
+        end
       end
     end
 

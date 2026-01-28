@@ -8,7 +8,7 @@ module Orma
     #   * An `access_token` column that will be populated automatically
     #   * The `access_view` macro which defines a template to be shown when opening a link containing the `access_token`
     #     * `access_view` can be called in the block of the `accessible` call
-    #   * A resource providing the `access_view` template
+    #   * A page providing the `access_view` template
     #     * The path will be `/<model_name>/access/<access_token>`
     #   * `#share_uri`, returning the full URI to open the `access_view`
     #   * `#share_element`, returning a wrapper template that will attempt to trigger sharing capabilities on the client device on click
@@ -57,40 +57,42 @@ module Orma
     macro accessible(access_model, target_resource, refreshed_template, &blk)
       column access_token : String = Base58.encode(Random::Secure.random_bytes(8))
 
-      class AccessResource < ApplicationResource
-        def show
-          unless model = {{@type}}.where(access_token: id).first?
-            ctx.response.status = :not_found
-            return
-          end
+      class AccessPage < ::ApplicationPage
+        path_param access_token, /[a-zA-Z0-9]+/
 
-          render model.access_view(ctx)
+        @model : {{@type}}?
+
+        def model : {{@type}}?
+          @model ||= {{@type}}.where(access_token: access_token).first?
         end
 
-        def self.uri_path_matcher
-          /^#{root_path}(\/|\/([a-zA-Z0-9]+))$/
-        end
-
-        def id?
-          self.class.match(ctx.request.path).try { |m| m[2]? }
+        before do
+          return true if model
+          404
         end
       end
 
       def share_uri
-        ::Crumble::Server.host + AccessResource.uri_path(access_token)
+        ::Crumble::Server.host + AccessPage.uri_path(access_token: access_token)
       end
 
       macro access_view(&blk)
-        class Accessible::AccessView
-          include ::Crumble::ContextView
+        class AccessPage
+          class View
+            include ::Crumble::ContextView
 
-          getter model : {{@type}}
+            getter model : {{@type}}
 
-          \{{blk.body}}
+            \{{blk.body}}
+          end
+
+          def page_view
+            View.new(ctx: ctx, model: model.not_nil!)
+          end
         end
 
         def access_view(ctx)
-          Accessible::AccessView.new(ctx: ctx, model: self)
+          AccessPage::View.new(ctx: ctx, model: self)
         end
       end
 

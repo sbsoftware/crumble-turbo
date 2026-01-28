@@ -19,6 +19,22 @@ module Orma
     # other subscribers after the action controller runs.
     abstract def refreshed_model_templates
 
+    class Policy < ::Crumble::Turbo::Action::Policy
+      def model
+        action.as(::Orma::ModelAction).model
+      end
+    end
+
+    macro policy(&blk)
+      class Policy < ::Orma::ModelAction::Policy
+        def model
+          action.as({{@type}}).model
+        end
+
+        {{blk.body}}
+      end
+    end
+
     macro view(&blk)
       ::Crumble::Turbo::Action.view do
         delegate :model, to: action

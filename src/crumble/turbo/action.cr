@@ -8,6 +8,34 @@ module Crumble::Turbo
 
     URI_PATH_PREFIX = "/a"
 
+    class Policy
+      getter action : ::Crumble::Turbo::Action
+
+      def initialize(@action : ::Crumble::Turbo::Action); end
+
+      delegate :ctx, to: action
+
+      def can_view? : Bool
+        true
+      end
+
+      def can_submit? : Bool
+        true
+      end
+
+      macro can_view(&blk)
+        def can_view? : Bool
+          {{blk.body}}
+        end
+      end
+
+      macro can_submit(&blk)
+        def can_submit? : Bool
+          {{blk.body}}
+        end
+      end
+    end
+
     def initialize(ctx : ::Crumble::Server::HandlerContext)
       @request_ctx = ctx.request_context
       @ctx = ctx
@@ -43,10 +71,17 @@ module Crumble::Turbo
       end
     end
 
+    macro policy(&blk)
+      class Policy < ::Crumble::Turbo::Action::Policy
+        {{blk.body}}
+      end
+    end
+
     macro inherited
       {% unless @type.abstract? %}
         class Template < ::Crumble::Turbo::ActionTemplate
           include IdentifiableView
+          include ::Crumble::Turbo::PolicyGuardedView
 
           getter action : ::{{@type}}
 
@@ -73,6 +108,10 @@ module Crumble::Turbo
           else
             Form.new(ctx)
           end
+        end
+
+        getter policy : Policy do
+          Policy.new(self)
         end
       {% end %}
     end
@@ -118,6 +157,11 @@ module Crumble::Turbo
 
     def handle
       return if before_action_halted?
+
+      unless policy.can_submit?
+        ctx.response.status_code = 403
+        return
+      end
 
       self.controller
       refresh_template

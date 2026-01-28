@@ -59,6 +59,23 @@ module Orma::ModelActionSpec
         end
       end
     end
+
+    model_action :restricted_view, some_number_view do
+      policy do
+        can_view do
+          ctx.request.method == "GET" && model.some_number.value > 0
+        end
+      end
+
+      controller do
+      end
+
+      view do
+        template do
+          div { "Restricted" }
+        end
+      end
+    end
   end
 
   describe "MyModel#inc_some_number_action_template" do
@@ -113,6 +130,18 @@ module Orma::ModelActionSpec
       Orma::ModelActionSpec::MyModel.find(model_id).some_number.value.should eq(4)
       res.should_not contain("data-model-template-id")
       res.should contain("data-model-action-template-id")
+    end
+  end
+
+  describe "policies for model actions" do
+    it "uses ctx and model to decide visibility" do
+      ctx = Crumble::Server::TestRequestContext.new(method: "GET", resource: "/")
+
+      hidden_model = Orma::ModelActionSpec::MyModel.new(id: 6_i64, some_number: 0)
+      hidden_model.restricted_view_action_template(ctx).to_html.should be_empty
+
+      visible_model = Orma::ModelActionSpec::MyModel.new(id: 7_i64, some_number: 2)
+      visible_model.restricted_view_action_template(ctx).to_html.should contain("Restricted")
     end
   end
 end

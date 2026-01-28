@@ -66,8 +66,13 @@ module Crumble::Turbo
         class Form < ::Crumble::Form
         end
 
-        def form
-          Form.new(ctx)
+        getter form : Form do
+          if ctx.handler == self
+            request_body = ctx.request.body.try(&.gets_to_end) || ""
+            Form.from_www_form(ctx, request_body)
+          else
+            Form.new(ctx)
+          end
         end
       {% end %}
     end

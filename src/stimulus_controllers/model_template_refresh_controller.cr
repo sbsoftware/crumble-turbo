@@ -7,17 +7,26 @@ module Crumble
 
       js_method :connect do
         this.evt_source = EventSource.new(Crumble::Turbo::ModelTemplateRefreshResource.uri_path.to_js_ref)
-        Turbo.session.connectStreamSource(this.evt_source)
 
         that = this
         this.evt_source.addEventListener("open") do
           that.connected = true
           that.register_model_templates._call
         end
+
+        this.evt_source.addEventListener("message") do |event|
+          Turbo.renderStreamMessage(that.decode_transport_payload(event.data))
+        end
       end
 
       js_method :disconnect do
         this.evt_source.close._call
+      end
+
+      js_method :decode_transport_payload do |payload|
+        return payload
+          .replace(_literal_js("/&#13;/g"), "\r")
+          .replace(_literal_js("/&#10;/g"), "\n")
       end
 
       js_method :register_model_templates do |force|

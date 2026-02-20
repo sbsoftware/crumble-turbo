@@ -3,6 +3,9 @@ require "../crumble/turbo/model_template_refresh_service"
 module Crumble
   module Turbo
     class ModelTemplateRefreshResource < ::Crumble::Resource
+      NEWLINE_ENTITY         = "&#10;"
+      CARRIAGE_RETURN_ENTITY = "&#13;"
+
       def index
         ctx.response.content_type = "text/event-stream"
         ctx.response.headers["Cache-Control"] = "no-cache"
@@ -22,9 +25,12 @@ module Crumble
 
           loop do
             turbo_stream = channel.receive
+            turbo_stream_html = String.build do |stream_io|
+              turbo_stream.to_html(stream_io)
+            end
 
             io << "data: "
-            turbo_stream.to_html(io)
+            io << encode_transport_newlines(turbo_stream_html)
             io << "\n\n"
             io.flush
           rescue e : IO::Error
@@ -48,6 +54,15 @@ module Crumble
           ModelTemplateRefreshService.register(ctx, model_template_id)
           ModelTemplateRefreshService.refresh_model_template_id(model_template_id, only: ctx.session.id)
         end
+      end
+
+      # SSE event parsing is line-based; transport newlines must be encoded
+      # and reconstructed by the client before Turbo stream rendering.
+      private def encode_transport_newlines(payload : String) : String
+        payload
+          .gsub("\r\n", "#{CARRIAGE_RETURN_ENTITY}#{NEWLINE_ENTITY}")
+          .gsub("\r", CARRIAGE_RETURN_ENTITY)
+          .gsub("\n", NEWLINE_ENTITY)
       end
     end
   end

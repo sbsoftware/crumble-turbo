@@ -135,7 +135,7 @@ module Crumble::Turbo
     macro form(&blk)
       class Form < ::Crumble::Form
         {% if @type.has_constant?("ModelFormModel") %}
-          include ::Crumble::ModelFormBehavior(::{{@type}}::ModelFormModel)
+          include ::Crumble::ModelActionFormBehavior(::{{@type}}::ModelFormModel)
         {% end %}
 
         {{blk.body}}

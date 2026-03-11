@@ -1,7 +1,7 @@
 module Crumble::ModelFormMarker
 end
 
-module Crumble::ModelFormBehavior(TModel)
+module Crumble::ModelActionFormBehavior(TModel)
   include Crumble::ModelFormMarker
 
   @model : TModel?
@@ -14,6 +14,9 @@ module Crumble::ModelFormBehavior(TModel)
     super(ctx, **values)
   end
 
+  # Keep an initializer without a model so inherited Crumble::Form APIs can
+  # still compile for this form class, even though model actions always pass
+  # the model via lifecycle hooks.
   def initialize(ctx : Crumble::Server::HandlerContext, **values : **T) forall T
     @model = nil
     super(ctx, **values)
@@ -44,6 +47,6 @@ module Crumble::ModelFormBehavior(TModel)
   end
 end
 
-class Crumble::ModelForm(TModel) < Crumble::Form
-  include Crumble::ModelFormBehavior(TModel)
+class Crumble::ModelForm(TModel)
+  include Crumble::ModelFormMarker
 end

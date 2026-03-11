@@ -75,7 +75,7 @@ module CreateChildSpec
     end
 
     create_child_action :add_child_with_plain_form_class, ChildModel, my_model_id, default_view do
-      class Form < ::Crumble::Form
+      form do
         field name : String
       end
 
@@ -178,7 +178,7 @@ describe "MyModel #add_child_action_template" do
       child.name.try(&.value).should eq("Allowed")
     end
 
-    it "remains compatible with plain Crumble::Form classes in model actions" do
+    it "supports model actions using the form macro helper" do
       model = CreateChildSpec::MyModel.create(name: "Parent")
       mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/add_child_with_plain_form_class", body: URI::Params.encode({name: "Legacy"}))
       CreateChildSpec::MyModel::AddChildWithPlainFormClassAction.handle(mock_ctx)

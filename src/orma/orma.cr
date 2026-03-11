@@ -7,6 +7,8 @@ require "../crumble/turbo/action_registry"
 class Orma::Record
   macro model_action(name, refreshed_model_template, base_class = Orma::ModelAction, &blk)
     class {{name.id.stringify.camelcase.id}}Action < {{base_class}}
+      alias ModelFormModel = ::{{@type.resolve}}
+
       getter model : ::{{@type}}
 
       def self.action_name : String
@@ -15,6 +17,30 @@ class Orma::Record
 
       def self.model_class : Orma::Record.class
         {{@type.resolve}}
+      end
+
+      protected def parse_form_for_action(request_body : String)
+        parse_form_for_model_action(Form, request_body)
+      end
+
+      private def parse_form_for_model_action(form_class : ::Crumble::ModelFormMarker.class, request_body : String)
+        form_class.from_www_form(ctx, model, request_body)
+      end
+
+      private def parse_form_for_model_action(form_class, request_body : String)
+        form_class.from_www_form(ctx, request_body)
+      end
+
+      protected def build_form_for_action
+        build_form_for_model_action(Form)
+      end
+
+      private def build_form_for_model_action(form_class : ::Crumble::ModelFormMarker.class)
+        form_class.new(ctx, model)
+      end
+
+      private def build_form_for_model_action(form_class)
+        form_class.new(ctx)
       end
 
       def refreshed_model_templates
@@ -57,17 +83,11 @@ class Orma::Record
       end
 
       controller do
-        return unless body = ctx.request.body
-
-        form = Form.from_www_form(ctx, body.gets_to_end)
-
-        if form.valid?
-          model.update(**form.values)
-        end
+        model.update(**form.values) if form.valid?
       end
 
       def form
-        Form.new(ctx, {{attr.id}}: !model.{{attr.id}}.value)
+        Form.new(ctx, model, {{attr.id}}: !model.{{attr.id}}.value)
       end
 
       {% if blk %}
@@ -76,6 +96,36 @@ class Orma::Record
     end
   end
 
+  # Defines a model action that creates a child record and merges:
+  #   * `parent_params`
+  #   * submitted form values
+  #   * optional `context_attributes`
+  #
+  # Form blocks in model actions are model-aware by default (`Crumble::ModelForm`),
+  # so option helpers can directly access `model`.
+  #
+  # Example:
+  # ```
+  # create_child_action :create_reimbursement, Reimbursement, group_id, default_view do
+  #   form do
+  #     field amount : Float64, attrs: {required: true, step: ".01"}
+  #     field recipient_membership_id : Int64, type: :select, options: recipient_options
+  #
+  #     def recipient_options
+  #       options = [{"", t.form.recipient_membership_id_prompt}] of Tuple(String, String)
+  #       model.group_memberships.each do |membership|
+  #         next if membership.user_id == ctx.session.user_id
+  #         options << {membership.id.value.to_s, membership.display_name}
+  #       end
+  #       options
+  #     end
+  #   end
+  # end
+  # ```
+  #
+  # Migration note:
+  # Existing actions can drop manual `@submitted_form` bookkeeping and most
+  # custom setter workarounds for model-dependent fields.
   macro create_child_action(name, child_class, parent_id_attr, tpl, &blk)
     model_action({{name}}, {{tpl}}, Orma::CreateChildAction) do
       def self.child_class : ::Orma::Record.class

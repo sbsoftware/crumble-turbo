@@ -101,13 +101,29 @@ module Crumble::Turbo
         class Form < ::Crumble::Form
         end
 
-        getter form : Form do
-          if ctx.handler == self
-            request_body = ctx.request.body.try(&.gets_to_end) || ""
-            Form.from_www_form(ctx, request_body)
-          else
-            Form.new(ctx)
-          end
+        @form : Form?
+
+        def form : Form
+          return @form.not_nil! if @form
+
+          @form = if ctx.handler == self
+                    parse_or_default_form(ctx.request.body.try(&.gets_to_end) || "")
+                  else
+                    build_or_default_form
+                  end
+          @form.not_nil!
+        end
+
+        private def parse_or_default_form(request_body : String) : Form
+          return Form.from_www_form(ctx, request_body) unless responds_to?(:parse_form_for_action)
+
+          self.parse_form_for_action(request_body)
+        end
+
+        private def build_or_default_form : Form
+          return Form.new(ctx) unless responds_to?(:build_form_for_action)
+
+          self.build_form_for_action
         end
 
         getter policy : Policy do
@@ -118,6 +134,10 @@ module Crumble::Turbo
 
     macro form(&blk)
       class Form < ::Crumble::Form
+        {% if @type.has_constant?("ModelFormModel") %}
+          include ::Crumble::ModelFormBehavior(::{{@type}}::ModelFormModel)
+        {% end %}
+
         {{blk.body}}
       end
     end

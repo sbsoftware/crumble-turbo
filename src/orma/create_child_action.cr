@@ -5,19 +5,20 @@ module Orma
     abstract def parent_params
 
     controller do
-      return unless body = ctx.request.body
+      return unless form.valid?
 
-      params = create_params(body.gets_to_end)
-      self.class.child_class.create(**params)
+      self.class.child_class.create(**create_params(form))
 
       ctx.response.status_code = 201
     end
 
     macro inherited
       def create_params(request_body : String)
-        form = Form.from_www_form(ctx, request_body)
+        create_params(parse_form_for_action(request_body))
+      end
 
-        parent_params.merge(form.values).merge(context_params)
+      def create_params(submitted_form = form)
+        parent_params.merge(submitted_form.values).merge(context_params)
       end
     end
 

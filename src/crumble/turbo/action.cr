@@ -8,6 +8,9 @@ module Crumble::Turbo
 
     URI_PATH_PREFIX = "/a"
 
+    class DefaultForm < ::Crumble::Form
+    end
+
     class Policy
       getter action : ::Crumble::Turbo::Action
 
@@ -98,12 +101,13 @@ module Crumble::Turbo
           Template.new(self)
         end
 
-        class Form < ::Crumble::Form
+        def self.form_class : ::Crumble::Form.class
+          DefaultForm
         end
 
-        @form : Form?
+        @form : ::Crumble::Form?
 
-        def form : Form
+        def form : ::Crumble::Form
           return @form.not_nil! if @form
 
           @form = if ctx.handler == self
@@ -114,12 +118,12 @@ module Crumble::Turbo
           @form.not_nil!
         end
 
-        protected def parse_form_for_action(request_body : String) : Form
-          Form.from_www_form(ctx, request_body)
+        protected def parse_form_for_action(request_body : String) : ::Crumble::Form
+          self.class.form_class.from_www_form(ctx, request_body)
         end
 
-        protected def build_form_for_action : Form
-          Form.new(ctx)
+        protected def build_form_for_action : ::Crumble::Form
+          self.class.form_class.new(ctx)
         end
 
         getter policy : Policy do
@@ -129,12 +133,25 @@ module Crumble::Turbo
     end
 
     macro form(&blk)
-      class Form < ::Crumble::Form
-        {% if @type.has_constant?("ModelFormModel") %}
-          include ::Crumble::ModelActionFormBehavior(::{{@type}}::ModelFormModel)
-        {% end %}
-
+      class Form < {% if @type.has_constant?("ModelFormModel") %}::Crumble::ModelForm(::{{@type}}::ModelFormModel){% else %}::Crumble::Form{% end %}
         {{blk.body}}
+      end
+
+      def self.form_class : ::Crumble::Form.class
+        Form
+      end
+
+      @form : Form?
+
+      def form : Form
+        return @form.not_nil! if @form
+
+        @form = if ctx.handler == self
+                  parse_form_for_action(ctx.request.body.try(&.gets_to_end) || "").as(Form)
+                else
+                  build_form_for_action.as(Form)
+                end
+        @form.not_nil!
       end
     end
 

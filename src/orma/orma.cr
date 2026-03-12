@@ -20,10 +20,10 @@ class Orma::Record
       end
 
       protected def parse_form_for_action(request_body : String)
-        parse_form_for_model_action(Form, request_body)
+        parse_form_for_model_action(self.class.form_class, request_body)
       end
 
-      private def parse_form_for_model_action(form_class : ::Crumble::ModelFormMarker.class, request_body : String)
+      private def parse_form_for_model_action(form_class : ::Crumble::ModelForm(TModel).class, request_body : String) forall TModel
         form_class.from_www_form(ctx, model, request_body)
       end
 
@@ -32,10 +32,10 @@ class Orma::Record
       end
 
       protected def build_form_for_action
-        build_form_for_model_action(Form)
+        build_form_for_model_action(self.class.form_class)
       end
 
-      private def build_form_for_model_action(form_class : ::Crumble::ModelFormMarker.class)
+      private def build_form_for_model_action(form_class : ::Crumble::ModelForm(TModel).class) forall TModel
         form_class.new(ctx, model)
       end
 

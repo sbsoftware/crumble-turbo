@@ -107,23 +107,19 @@ module Crumble::Turbo
           return @form.not_nil! if @form
 
           @form = if ctx.handler == self
-                    parse_or_default_form(ctx.request.body.try(&.gets_to_end) || "")
+                    parse_form_for_action(ctx.request.body.try(&.gets_to_end) || "")
                   else
-                    build_or_default_form
+                    build_form_for_action
                   end
           @form.not_nil!
         end
 
-        private def parse_or_default_form(request_body : String) : Form
-          return Form.from_www_form(ctx, request_body) unless responds_to?(:parse_form_for_action)
-
-          self.parse_form_for_action(request_body)
+        protected def parse_form_for_action(request_body : String) : Form
+          Form.from_www_form(ctx, request_body)
         end
 
-        private def build_or_default_form : Form
-          return Form.new(ctx) unless responds_to?(:build_form_for_action)
-
-          self.build_form_for_action
+        protected def build_form_for_action : Form
+          Form.new(ctx)
         end
 
         getter policy : Policy do

@@ -101,9 +101,7 @@ module Crumble::Turbo
           Template.new(self)
         end
 
-        @form : ::Crumble::Form?
-
-        getter form : ::Crumble::Form do
+        def form : ::Crumble::Form
           DefaultForm.new(ctx)
         end
 

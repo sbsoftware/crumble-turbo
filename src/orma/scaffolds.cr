@@ -102,11 +102,7 @@ module Orma
 
       model_action :accept_access, {{refreshed_template}} do
         form do
-          field access_token : String, type: :hidden, label: nil do
-            before_render do |value|
-              value || model.access_token.value
-            end
-          end
+          field access_token : String = model.access_token.value, type: :hidden, label: nil
         end
 
         controller do

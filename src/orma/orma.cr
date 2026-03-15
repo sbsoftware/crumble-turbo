@@ -98,10 +98,6 @@ class Orma::Record
   #   end
   # end
   # ```
-  #
-  # Migration note:
-  # Existing actions can drop manual `@submitted_form` bookkeeping and most
-  # custom setter workarounds for model-dependent fields.
   macro create_child_action(name, child_class, parent_id_attr, tpl, &blk)
     model_action({{name}}, {{tpl}}, Orma::CreateChildAction) do
       def self.child_class : ::Orma::Record.class

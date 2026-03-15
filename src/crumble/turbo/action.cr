@@ -101,10 +101,6 @@ module Crumble::Turbo
           Template.new(self)
         end
 
-        def self.form_class : ::Crumble::Form.class
-          DefaultForm
-        end
-
         @form : ::Crumble::Form?
 
         def form : ::Crumble::Form
@@ -119,11 +115,11 @@ module Crumble::Turbo
         end
 
         protected def parse_form_for_action(request_body : String) : ::Crumble::Form
-          self.class.form_class.from_www_form(ctx, request_body)
+          DefaultForm.from_www_form(ctx, request_body)
         end
 
         protected def build_form_for_action : ::Crumble::Form
-          self.class.form_class.new(ctx)
+          DefaultForm.new(ctx)
         end
 
         getter policy : Policy do
@@ -133,12 +129,16 @@ module Crumble::Turbo
     end
 
     macro form(&blk)
-      class Form < {% if @type.has_constant?("ModelFormModel") %}::Crumble::ModelForm(::{{@type}}::ModelFormModel){% else %}::Crumble::Form{% end %}
+      class Form < ::Crumble::Form
         {{blk.body}}
       end
 
-      def self.form_class : ::Crumble::Form.class
-        Form
+      protected def parse_form_for_action(request_body : String) : Form
+        Form.from_www_form(ctx, request_body)
+      end
+
+      protected def build_form_for_action : Form
+        Form.new(ctx)
       end
 
       @form : Form?

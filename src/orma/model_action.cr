@@ -49,6 +49,33 @@ module Orma
       end
     end
 
+    macro form(&blk)
+      class Form < ::Crumble::ModelForm(::{{@type}}::ModelFormModel)
+        {{blk.body}}
+      end
+
+      protected def parse_form_for_action(request_body : String) : Form
+        Form.from_www_form(ctx, model, request_body)
+      end
+
+      protected def build_form_for_action : Form
+        Form.new(ctx, model)
+      end
+
+      @form : Form?
+
+      def form : Form
+        return @form.not_nil! if @form
+
+        @form = if ctx.handler == self
+                  parse_form_for_action(ctx.request.body.try(&.gets_to_end) || "")
+                else
+                  build_form_for_action
+                end
+        @form.not_nil!
+      end
+    end
+
     def initialize(ctx : ::Crumble::Server::HandlerContext, @model)
       @request_ctx = ctx.request_context
       @ctx = ctx

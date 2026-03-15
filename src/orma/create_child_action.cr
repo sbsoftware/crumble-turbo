@@ -7,18 +7,14 @@ module Orma
     controller do
       return unless form.valid?
 
-      self.class.child_class.create(**create_params(form))
+      self.class.child_class.create(**create_params)
 
       ctx.response.status_code = 201
     end
 
     macro inherited
-      def create_params(request_body : String)
-        create_params(parse_form_for_action(request_body))
-      end
-
-      def create_params(submitted_form = form)
-        parent_params.merge(submitted_form.values).merge(context_params)
+      def create_params
+        parent_params.merge(form.values).merge(context_params)
       end
     end
 

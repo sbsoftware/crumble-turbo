@@ -19,30 +19,6 @@ class Orma::Record
         {{@type.resolve}}
       end
 
-      protected def parse_form_for_action(request_body : String)
-        parse_form_for_model_action(self.class.form_class, request_body)
-      end
-
-      private def parse_form_for_model_action(form_class : ::Crumble::ModelForm(TModel).class, request_body : String) forall TModel
-        form_class.from_www_form(ctx, model, request_body)
-      end
-
-      private def parse_form_for_model_action(form_class, request_body : String)
-        form_class.from_www_form(ctx, request_body)
-      end
-
-      protected def build_form_for_action
-        build_form_for_model_action(self.class.form_class)
-      end
-
-      private def build_form_for_model_action(form_class : ::Crumble::ModelForm(TModel).class) forall TModel
-        form_class.new(ctx, model)
-      end
-
-      private def build_form_for_model_action(form_class)
-        form_class.new(ctx)
-      end
-
       def refreshed_model_templates
         {% tpl_expr = refreshed_model_template %}
         {% if tpl_expr.is_a?(Path) %}

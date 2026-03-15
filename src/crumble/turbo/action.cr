@@ -103,22 +103,7 @@ module Crumble::Turbo
 
         @form : ::Crumble::Form?
 
-        def form : ::Crumble::Form
-          return @form.not_nil! if @form
-
-          @form = if ctx.handler == self
-                    parse_form_for_action(ctx.request.body.try(&.gets_to_end) || "")
-                  else
-                    build_form_for_action
-                  end
-          @form.not_nil!
-        end
-
-        protected def parse_form_for_action(request_body : String) : ::Crumble::Form
-          DefaultForm.from_www_form(ctx, request_body)
-        end
-
-        protected def build_form_for_action : ::Crumble::Form
+        getter form : ::Crumble::Form do
           DefaultForm.new(ctx)
         end
 
@@ -133,25 +118,12 @@ module Crumble::Turbo
         {{blk.body}}
       end
 
-      protected def parse_form_for_action(request_body : String) : Form
-        Form.from_www_form(ctx, request_body)
-      end
-
-      protected def build_form_for_action : Form
-        Form.new(ctx)
-      end
-
-      @form : Form?
-
-      def form : Form
-        return @form.not_nil! if @form
-
-        @form = if ctx.handler == self
-                  parse_form_for_action(ctx.request.body.try(&.gets_to_end) || "").as(Form)
-                else
-                  build_form_for_action.as(Form)
-                end
-        @form.not_nil!
+      getter form : Form do
+        if ctx.handler == self
+          Form.from_www_form(ctx, ctx.request.body.try(&.gets_to_end) || "")
+        else
+          Form.new(ctx)
+        end
       end
     end
 

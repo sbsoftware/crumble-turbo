@@ -102,11 +102,11 @@ module Orma
 
       model_action :accept_access, {{refreshed_template}} do
         form do
-          field access_token : String, type: :hidden, label: nil
-        end
-
-        def build_form_for_action
-          Form.new(ctx, model, access_token: model.access_token.value)
+          field access_token : String, type: :hidden, label: nil do
+            before_render do |value|
+              value || model.access_token.value
+            end
+          end
         end
 
         controller do

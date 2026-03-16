@@ -102,21 +102,10 @@ module Orma
 
       model_action :accept_access, {{refreshed_template}} do
         form do
-          field access_token : String, type: :hidden, label: nil
-        end
-
-        def form
-          Form.new(ctx, access_token: model.access_token.value)
+          field access_token : String = model.access_token.value, type: :hidden, label: nil
         end
 
         controller do
-          unless body = ctx.request.body
-            ctx.response.status_code = 400
-            return
-          end
-
-          form = Form.from_www_form(ctx, body.gets_to_end)
-
           unless form.access_token == model.access_token.value
             ctx.response.status_code = 400
             return

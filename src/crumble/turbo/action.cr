@@ -8,6 +8,9 @@ module Crumble::Turbo
 
     URI_PATH_PREFIX = "/a"
 
+    class DefaultForm < ::Crumble::Form
+    end
+
     class Policy
       getter action : ::Crumble::Turbo::Action
 
@@ -98,16 +101,8 @@ module Crumble::Turbo
           Template.new(self)
         end
 
-        class Form < ::Crumble::Form
-        end
-
-        getter form : Form do
-          if ctx.handler == self
-            request_body = ctx.request.body.try(&.gets_to_end) || ""
-            Form.from_www_form(ctx, request_body)
-          else
-            Form.new(ctx)
-          end
+        def form : ::Crumble::Form
+          DefaultForm.new(ctx)
         end
 
         getter policy : Policy do
@@ -119,6 +114,14 @@ module Crumble::Turbo
     macro form(&blk)
       class Form < ::Crumble::Form
         {{blk.body}}
+      end
+
+      getter form : Form do
+        if ctx.handler == self
+          Form.from_www_form(ctx, ctx.request.body.try(&.gets_to_end) || "")
+        else
+          Form.new(ctx)
+        end
       end
     end
 

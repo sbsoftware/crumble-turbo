@@ -60,14 +60,18 @@ module Orma
       class AccessPage < ::ApplicationPage
         path_param access_token, /[a-zA-Z0-9]+/
 
-        @model : {{@type}}?
+        @access_model : {{@type}}?
 
-        def model : {{@type}}?
-          @model ||= {{@type}}.where(access_token: access_token).first?
+        def access_model : {{@type}}?
+          @access_model ||= {{@type}}.where(access_token: access_token).first?
+        end
+
+        def model : {{@type}}
+          access_model.not_nil!
         end
 
         before do
-          return true if model
+          return true if access_model
           404
         end
       end
@@ -77,22 +81,22 @@ module Orma
       end
 
       macro access_view(&blk)
+        # Keep a standalone renderable helper for callers while the actual page
+        # uses Crumble::Page's direct template semantics.
+        class Accessible::AccessView
+          include ::Crumble::ContextView
+
+          getter model : {{@type}}
+
+          \{{blk.body}}
+        end
+
         class AccessPage
-          class View
-            include ::Crumble::ContextView
-
-            getter model : {{@type}}
-
-            \{{blk.body}}
-          end
-
-          def page_view
-            View.new(ctx: ctx, model: model.not_nil!)
-          end
+          \{{blk.body}}
         end
 
         def access_view(ctx)
-          AccessPage::View.new(ctx: ctx, model: self)
+          Accessible::AccessView.new(ctx: ctx, model: self)
         end
       end
 
@@ -102,7 +106,15 @@ module Orma
 
       model_action :accept_access, {{refreshed_template}} do
         form do
-          field access_token : String = model.access_token.value, type: :hidden, label: nil
+          field access_token : String, type: :hidden, label: nil
+        end
+
+        def form
+          if ctx.handler == self
+            Form.from_www_form(ctx, model, ctx.request.body.try(&.gets_to_end) || "")
+          else
+            Form.new(ctx, model, access_token: model.access_token.value)
+          end
         end
 
         controller do

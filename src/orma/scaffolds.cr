@@ -81,22 +81,8 @@ module Orma
       end
 
       macro access_view(&blk)
-        # Keep a standalone renderable helper for callers while the actual page
-        # uses Crumble::Page's direct template semantics.
-        class Accessible::AccessView
-          include ::Crumble::ContextView
-
-          getter model : {{@type}}
-
-          \{{blk.body}}
-        end
-
         class AccessPage
           \{{blk.body}}
-        end
-
-        def access_view(ctx)
-          Accessible::AccessView.new(ctx: ctx, model: self)
         end
       end
 

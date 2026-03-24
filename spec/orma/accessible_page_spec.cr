@@ -69,12 +69,6 @@ describe "accessible pages" do
     res.should contain(%(data-model-action-template-id="AccessiblePageSpecGroup##{group.id.value}-accept_access"))
   end
 
-  it "still exposes a standalone access view renderer" do
-    group = AccessiblePageSpecGroup.create(name: "Rowing Club", access_token: "RowingClubToken1")
-
-    group.access_view(test_handler_context).to_html.should contain("<h1>Join Rowing Club</h1>")
-  end
-
   it "keeps accept_access action handling unchanged" do
     group = AccessiblePageSpecGroup.create(name: "Sailing Club", access_token: "SailingClubToken1")
     res = String.build do |io|

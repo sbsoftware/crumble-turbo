@@ -69,7 +69,7 @@ describe "accessible pages" do
     res.should contain(%(data-model-action-template-id="AccessiblePageSpecGroup##{group.id.value}-accept_access"))
   end
 
-  it "keeps accept_access action handling unchanged" do
+  it "creates the access record, redirects to the target resource, and refreshes the model template when the submitted token matches" do
     group = AccessiblePageSpecGroup.create(name: "Sailing Club", access_token: "SailingClubToken1")
     res = String.build do |io|
       ctx = Crumble::Server::TestRequestContext.new(io, method: "POST", resource: AccessiblePageSpecGroup::AcceptAccessAction.uri_path(group.id.value), body: "access_token=#{group.access_token.value}")

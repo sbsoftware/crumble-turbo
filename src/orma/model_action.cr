@@ -50,46 +50,8 @@ module Orma
     end
 
     macro form(&blk)
-      {% field_calls = [] of ASTNode %}
-      {% body_nodes = blk.body.is_a?(Expressions) ? blk.body.expressions : [blk.body] of ASTNode %}
-      {% for node in body_nodes %}
-        {% if node.is_a?(Call) && node.name == "field" && node.args.size > 0 && node.args[0].is_a?(TypeDeclaration) %}
-          {% field_calls << node.args[0] %}
-        {% end %}
-      {% end %}
-
-      class Form < ::Crumble::Form
+      class Form < ::Crumble::ModelForm(::{{@type}}::ModelFormModel)
         {{blk.body}}
-
-        getter model : ::{{@type}}::ModelFormModel
-
-        def initialize(ctx : ::Crumble::Server::HandlerContext, model : ::{{@type}}::ModelFormModel, **values : **T) forall T
-          initialize(ctx, false, model, **values)
-        end
-
-        def initialize(@ctx : ::Crumble::Server::HandlerContext, @submitted : Bool, @model : ::{{@type}}::ModelFormModel, **values : **T) forall T
-          {% for type_decl in field_calls %}
-            unless (%value = values[{{type_decl.var.symbolize}}]?).nil?
-              @{{type_decl.var}} = __apply_after_submit_{{type_decl.var.id}}(%value)
-            end
-          {% end %}
-        end
-
-        def self.from_www_form(ctx : ::Crumble::Server::HandlerContext, model : ::{{@type}}::ModelFormModel, www_form : ::String) : self
-          from_www_form(ctx, model, ::URI::Params.parse(www_form))
-        end
-
-        def self.from_www_form(ctx : ::Crumble::Server::HandlerContext, model : ::{{@type}}::ModelFormModel, params : ::URI::Params) : self
-          {% for type_decl in field_calls %}
-            %field{type_decl.var} = {{type_decl.type}}.from_www_form(params, {{type_decl.var.stringify}})
-          {% end %}
-
-          new(ctx, true, model,
-            {% for type_decl in field_calls %}
-              {{type_decl.var.id}}: %field{type_decl.var},
-            {% end %}
-          )
-        end
       end
 
       getter form : Form do

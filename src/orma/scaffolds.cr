@@ -106,15 +106,7 @@ module Orma
 
       model_action :accept_access, {{refreshed_template}} do
         form do
-          field access_token : String, type: :hidden, label: nil
-        end
-
-        def form
-          if ctx.handler == self
-            Form.from_www_form(ctx, model, ctx.request.body.try(&.gets_to_end) || "")
-          else
-            Form.new(ctx, model, access_token: model.access_token.value)
-          end
+          field access_token : String = model.access_token.value, type: :hidden, label: nil
         end
 
         controller do

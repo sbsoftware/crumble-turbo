@@ -60,14 +60,18 @@ module Orma
       class AccessPage < ::ApplicationPage
         path_param access_token, /[a-zA-Z0-9]+/
 
-        @model : {{@type}}?
+        @access_model : {{@type}}?
 
-        def model : {{@type}}?
-          @model ||= {{@type}}.where(access_token: access_token).first?
+        def access_model : {{@type}}?
+          @access_model ||= {{@type}}.where(access_token: access_token).first?
+        end
+
+        def model : {{@type}}
+          access_model.not_nil!
         end
 
         before do
-          return true if model
+          return true if access_model
           404
         end
       end
@@ -78,21 +82,7 @@ module Orma
 
       macro access_view(&blk)
         class AccessPage
-          class View
-            include ::Crumble::ContextView
-
-            getter model : {{@type}}
-
-            \{{blk.body}}
-          end
-
-          def page_view
-            View.new(ctx: ctx, model: model.not_nil!)
-          end
-        end
-
-        def access_view(ctx)
-          AccessPage::View.new(ctx: ctx, model: self)
+          \{{blk.body}}
         end
       end
 

@@ -26,7 +26,7 @@ Require the shard from your app:
 require "crumble-turbo"
 ```
 
-If you render pages through `ToHtml::Layout`, the shard appends the Turbo script tag, action form styles, and the model template refresh controller automatically.
+The shard appends the Turbo script tag, action form styles, and the model template refresh controller to Crumble's default layout.
 
 ## Static Actions
 
@@ -65,7 +65,7 @@ class Invoice < Orma::Record
 end
 ```
 
-Render a template with `invoice.summary.renderer(ctx)`. You can embed it directly in a page layout with `to_html`, or call `invoice.summary.renderer(ctx).turbo_stream` to emit a replacement stream for that fragment. Calling `invoice.summary.refresh!` pushes the refreshed template to subscribed sessions through the built-in model template refresh resource.
+Render a template with `invoice.summary.renderer(ctx)`. You can embed it directly in a page layout with `to_html`. Calling `invoice.summary.refresh!` pushes the refreshed template to subscribed sessions through the built-in model template refresh resource.
 
 ## Model Actions
 
@@ -96,7 +96,7 @@ class Invoice < Orma::Record
 end
 ```
 
-Render the trigger with `invoice.increment_total_action_template(ctx)`. The generated action path includes the model id, the action loads `model` for you, and `summary` is rendered back to the requester and refreshed for other subscribed sessions after the controller runs. Pass `nil` as the refresh target to skip template refreshes, or pass an array/tuple to refresh multiple templates.
+Render the trigger with `invoice.increment_total_action_template(ctx)`. The action loads `model` for you, and `summary` is rendered back to the requester and refreshed for other subscribed sessions after the controller runs. Pass `nil` as the refresh target to skip template refreshes, or pass an array/tuple to refresh multiple templates.
 
 ## Development
 

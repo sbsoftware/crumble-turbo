@@ -20,8 +20,6 @@ TODO: Write a description here
 require "crumble-material"
 ```
 
-TODO: Write usage instructions here
-
 ## Development
 
 TODO: Write development instructions here

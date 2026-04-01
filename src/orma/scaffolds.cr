@@ -60,14 +60,18 @@ module Orma
       class AccessPage < ::ApplicationPage
         path_param access_token, /[a-zA-Z0-9]+/
 
-        @model : {{@type}}?
+        @access_model : {{@type}}?
 
-        def model : {{@type}}?
-          @model ||= {{@type}}.where(access_token: access_token).first?
+        def access_model : {{@type}}?
+          @access_model ||= {{@type}}.where(access_token: access_token).first?
+        end
+
+        def model : {{@type}}
+          access_model.not_nil!
         end
 
         before do
-          return true if model
+          return true if access_model
           404
         end
       end
@@ -78,21 +82,7 @@ module Orma
 
       macro access_view(&blk)
         class AccessPage
-          class View
-            include ::Crumble::ContextView
-
-            getter model : {{@type}}
-
-            \{{blk.body}}
-          end
-
-          def page_view
-            View.new(ctx: ctx, model: model.not_nil!)
-          end
-        end
-
-        def access_view(ctx)
-          AccessPage::View.new(ctx: ctx, model: self)
+          \{{blk.body}}
         end
       end
 
@@ -102,21 +92,10 @@ module Orma
 
       model_action :accept_access, {{refreshed_template}} do
         form do
-          field access_token : String, type: :hidden, label: nil
-        end
-
-        def form
-          Form.new(ctx, access_token: model.access_token.value)
+          field access_token : String = model.access_token.value, type: :hidden, label: nil
         end
 
         controller do
-          unless body = ctx.request.body
-            ctx.response.status_code = 400
-            return
-          end
-
-          form = Form.from_www_form(ctx, body.gets_to_end)
-
           unless form.access_token == model.access_token.value
             ctx.response.status_code = 400
             return

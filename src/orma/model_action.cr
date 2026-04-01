@@ -49,6 +49,20 @@ module Orma
       end
     end
 
+    macro form(&blk)
+      class Form < ::Crumble::ModelForm(::{{@type}}::ModelFormModel)
+        {{blk.body}}
+      end
+
+      getter form : Form do
+        if ctx.handler == self
+          Form.from_www_form(ctx, model, ctx.request.body.try(&.gets_to_end) || "")
+        else
+          Form.new(ctx, model)
+        end
+      end
+    end
+
     def initialize(ctx : ::Crumble::Server::HandlerContext, @model)
       @request_ctx = ctx.request_context
       @ctx = ctx

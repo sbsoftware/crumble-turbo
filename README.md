@@ -30,7 +30,7 @@ The shard appends the Turbo script tag, action form styles, and the model templa
 
 ## Static Actions
 
-Use `Crumble::Turbo::Action` when a page needs to submit a `POST` request that answers with a Turbo stream. A static action owns both the server-side controller logic and the template used to render the trigger.
+Use `Crumble::Turbo::Action` when a page needs to submit a `POST` request that answers with a Turbo stream. An action owns both the server-side controller logic and the template used to render the trigger.
 
 ```crystal
 class PublishReport < Crumble::Turbo::Action
@@ -48,7 +48,7 @@ class PublishReport < Crumble::Turbo::Action
 end
 ```
 
-Render the trigger with `PublishReport.new(ctx).action_template`. The generated form submits to `PublishReport.uri_path`. Use `action_form` for a plain form submit or `custom_action_trigger` when you want a clickable wrapper around a hidden submit input.
+Render the trigger with `PublishReport.new(ctx).action_template`. Use `action_form` for a plain form submit or `custom_action_trigger` when you want a clickable wrapper around a hidden submit input.
 
 ## Model Templates
 

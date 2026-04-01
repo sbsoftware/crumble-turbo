@@ -48,7 +48,7 @@ class PublishReport < Crumble::Turbo::Action
 end
 ```
 
-Render the trigger with `PublishReport.new(ctx).action_template`. The generated form submits to `PublishReport.uri_path`, and `PublishReport.handle(ctx)` runs the action for matching `POST` requests. Use `action_form` for a plain form submit or `custom_action_trigger` when you want a clickable wrapper around a hidden submit input.
+Render the trigger with `PublishReport.new(ctx).action_template`. The generated form submits to `PublishReport.uri_path`. Use `action_form` for a plain form submit or `custom_action_trigger` when you want a clickable wrapper around a hidden submit input.
 
 ## Model Templates
 

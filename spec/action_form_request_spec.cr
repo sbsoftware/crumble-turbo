@@ -3,7 +3,7 @@ require "./spec_helper"
 module Crumble::Turbo::ActionFormRequestSpec
   class PayloadAction < Crumble::Turbo::Action
     form do
-      field name : String
+      field name : String, allow_blank: false
     end
 
     controller do
@@ -50,6 +50,35 @@ module Crumble::Turbo::ActionFormRequestSpec
       form.name.should be_nil
       form.valid?.should be_false
       form.errors.should eq(["name"])
+    end
+
+    it "resets the form after a valid submit before refreshing the template" do
+      response = String.build do |io|
+        body = URI::Params.encode({name: "Alice"})
+        ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: PayloadAction.uri_path, body: body, response_io: io)
+        action = PayloadAction.new(ctx)
+        action.handle
+        action.form.name.should be_nil
+        ctx.response.flush
+      end
+
+      response.should contain(%(name="name" value=""))
+      response.should_not contain(%(value="Alice"))
+      response.should_not contain("crumble--field-errors")
+    end
+
+    it "preserves submitted values and errors after an invalid submit" do
+      response = String.build do |io|
+        body = URI::Params.encode({name: ""})
+        ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: PayloadAction.uri_path, body: body, response_io: io)
+        action = PayloadAction.new(ctx)
+        action.handle
+        action.form.name.should eq("")
+        action.form.errors.should eq(["name"])
+        ctx.response.flush
+      end
+
+      response.should contain("crumble--field-errors")
     end
   end
 end

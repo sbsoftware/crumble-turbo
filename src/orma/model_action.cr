@@ -61,6 +61,12 @@ module Orma
           Form.new(ctx, model)
         end
       end
+
+      def reset_form_after_successful_submit
+        return unless (request_form = form).submitted? && request_form.valid?
+
+        @form = nil
+      end
     end
 
     def initialize(ctx : ::Crumble::Server::HandlerContext, @model)

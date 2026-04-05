@@ -123,6 +123,12 @@ module Crumble::Turbo
           Form.new(ctx)
         end
       end
+
+      def reset_form_after_successful_submit
+        return unless (request_form = form).submitted? && request_form.valid?
+
+        @form = nil
+      end
     end
 
     macro view(&blk)
@@ -167,6 +173,7 @@ module Crumble::Turbo
       end
 
       self.controller
+      reset_form_after_successful_submit
       refresh_template
     end
 
@@ -201,6 +208,9 @@ module Crumble::Turbo
     def redirect(new_path)
       ctx.response.status_code = 303
       ctx.response.headers["Location"] = new_path
+    end
+
+    def reset_form_after_successful_submit
     end
 
     # Crumble::Server::ViewHandler method

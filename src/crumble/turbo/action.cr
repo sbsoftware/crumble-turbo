@@ -3,6 +3,14 @@ require "./action_form"
 require "./custom_action_trigger"
 
 module Crumble::Turbo
+  module RequestBackedFormReset
+    def reset_form
+      return unless (request_form = form).submitted? && request_form.valid?
+
+      @form = nil
+    end
+  end
+
   abstract class Action
     include Crumble::Server::ViewHandler
 
@@ -124,11 +132,7 @@ module Crumble::Turbo
         end
       end
 
-      def reset_form_after_successful_submit
-        return unless (request_form = form).submitted? && request_form.valid?
-
-        @form = nil
-      end
+      include ::Crumble::Turbo::RequestBackedFormReset
     end
 
     macro view(&blk)
@@ -173,7 +177,7 @@ module Crumble::Turbo
       end
 
       self.controller
-      reset_form_after_successful_submit
+      reset_form
       refresh_template
     end
 
@@ -210,7 +214,7 @@ module Crumble::Turbo
       ctx.response.headers["Location"] = new_path
     end
 
-    def reset_form_after_successful_submit
+    def reset_form
     end
 
     # Crumble::Server::ViewHandler method

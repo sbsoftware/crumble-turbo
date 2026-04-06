@@ -62,11 +62,7 @@ module Orma
         end
       end
 
-      def reset_form_after_successful_submit
-        return unless (request_form = form).submitted? && request_form.valid?
-
-        @form = nil
-      end
+      include ::Crumble::Turbo::RequestBackedFormReset
     end
 
     def initialize(ctx : ::Crumble::Server::HandlerContext, @model)

@@ -168,6 +168,22 @@ describe "MyModel #add_child_action_template" do
       response.should contain(%(<option value="Allowed">Allowed</option>))
     end
 
+    it "resets submitted values after a valid model-aware form request" do
+      model = CreateChildSpec::MyModel.create(name: "Allowed")
+      response = String.build do |io|
+        ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/add_child_with_dynamic_options", body: URI::Params.encode({name: "Allowed"}), response_io: io)
+        CreateChildSpec::MyModel::AddChildWithDynamicOptionsAction.handle(ctx)
+        ctx.response.status_code.should eq(201)
+        ctx.response.flush
+      end
+
+      CreateChildSpec::ChildModel.where(my_model_id: model.id.value).count.should eq(1)
+      response.should contain(%(<option value="" selected>Pick a name</option>))
+      response.should contain(%(<option value="Allowed">Allowed</option>))
+      response.should_not contain(%(<option value="Allowed" selected>Allowed</option>))
+      response.should_not contain(%(<div class="errors">))
+    end
+
     it "creates children from model-aware forms without extra action ivars" do
       model = CreateChildSpec::MyModel.create(name: "Allowed")
       mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/add_child_with_dynamic_options", body: URI::Params.encode({name: "Allowed"}))

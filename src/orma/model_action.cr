@@ -61,6 +61,8 @@ module Orma
           Form.new(ctx, model)
         end
       end
+
+      include ::Crumble::Turbo::RequestBackedFormReset
     end
 
     def initialize(ctx : ::Crumble::Server::HandlerContext, @model)

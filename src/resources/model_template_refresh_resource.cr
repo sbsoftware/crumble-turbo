@@ -9,7 +9,6 @@ module Crumble
       def index
         ctx.response.content_type = "text/event-stream"
         ctx.response.headers["Cache-Control"] = "no-cache"
-        ctx.response.headers["Connection"] = "keep-alive"
         ctx.response.headers["X-Accel-Buffering"] = "no"
 
         channel = ModelTemplateRefreshService.subscribe(ctx)

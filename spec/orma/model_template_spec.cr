@@ -31,7 +31,7 @@ module Orma::ModelTemplateSpec
       mdl = Model.new(id: 65_i64)
       mdl.name = "Pavel"
       expected_html = <<-HTML
-      <div data-model-template-id="Orma::ModelTemplateSpec::Model#65-default_model_template" data-crumble--turbo--model-template-refresh-target="modelTemplate"><strong>Pavel</strong></div>
+      <div data-model-template-id="Orma::ModelTemplateSpec::Model#65-default_model_template" data-crumble--turbo--model-template-refresh-target="modelTemplate" class="orma--record--model-template-wrapper"><strong>Pavel</strong></div>
       HTML
 
       mdl.default_model_template.renderer(test_handler_context).to_html.should eq(expected_html)
@@ -40,11 +40,21 @@ module Orma::ModelTemplateSpec
     it "can provide additional wrapper element attributes" do
       mdl = Model.new(id: 50_i64)
       expected_html = <<-HTML.squish
-      <div data-model-template-id="Orma::ModelTemplateSpec::Model#50-model_tpl_with_class" data-crumble--turbo--model-template-refresh-target="modelTemplate" class="orma--model-template-spec--my-class">
+      <div data-model-template-id="Orma::ModelTemplateSpec::Model#50-model_tpl_with_class" data-crumble--turbo--model-template-refresh-target="modelTemplate" class="orma--record--model-template-wrapper orma--model-template-spec--my-class">
         <i>50</i>
       </div>
       HTML
       mdl.model_tpl_with_class.renderer(test_handler_context).to_html.should eq(expected_html)
+    end
+
+    it "styles the model template wrapper to preserve its container dimensions" do
+      expected_css = <<-CSS
+      .orma--record--model-template-wrapper {
+        width: 100%;
+        height: 100%;
+      }
+      CSS
+      Orma::Record::Style.to_s.should eq(expected_css)
     end
   end
 
@@ -54,7 +64,7 @@ module Orma::ModelTemplateSpec
       mdl.name = "Bronko"
 
       expected_html = <<-HTML
-      <turbo-stream action="replace" targets="[data-model-template-id='Orma::ModelTemplateSpec::Model#66-default_model_template']"><template><div data-model-template-id="Orma::ModelTemplateSpec::Model#66-default_model_template" data-crumble--turbo--model-template-refresh-target="modelTemplate"><strong>Bronko</strong></div></template></turbo-stream>
+      <turbo-stream action="replace" targets="[data-model-template-id='Orma::ModelTemplateSpec::Model#66-default_model_template']"><template><div data-model-template-id="Orma::ModelTemplateSpec::Model#66-default_model_template" data-crumble--turbo--model-template-refresh-target="modelTemplate" class="orma--record--model-template-wrapper"><strong>Bronko</strong></div></template></turbo-stream>
       HTML
 
       mdl.default_model_template.renderer(test_handler_context).turbo_stream.to_html.should eq(expected_html)
@@ -67,7 +77,7 @@ module Orma::ModelTemplateSpec
       expected_html = <<-HTML.squish
       <html>
         <body>
-          <div data-model-template-id="Orma::ModelTemplateSpec::Model#67-default_model_template" data-crumble--turbo--model-template-refresh-target="modelTemplate"><strong>Woody</strong></div>
+          <div data-model-template-id="Orma::ModelTemplateSpec::Model#67-default_model_template" data-crumble--turbo--model-template-refresh-target="modelTemplate" class="orma--record--model-template-wrapper"><strong>Woody</strong></div>
         </body>
       </html>
       HTML

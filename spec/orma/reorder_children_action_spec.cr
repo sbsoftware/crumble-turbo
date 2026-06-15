@@ -49,12 +49,12 @@ module ReorderChildrenActionSpec
           </form>
           <div>
             <div data-reorder-children-action-subject-id="#{child_1.id.value}" draggable="true">
-              <div data-model-template-id="ReorderChildrenActionSpec::Child##{child_1.id.value}-default_view" data-crumble--turbo--model-template-refresh-target="modelTemplate">
+              <div data-model-template-id="ReorderChildrenActionSpec::Child##{child_1.id.value}-default_view" data-crumble--turbo--model-template-refresh-target="modelTemplate" class="orma--record--model-template-wrapper">
                 <div>One</div>
               </div>
             </div>
             <div data-reorder-children-action-subject-id="#{child_2.id.value}" draggable="true">
-              <div data-model-template-id="ReorderChildrenActionSpec::Child##{child_2.id.value}-default_view" data-crumble--turbo--model-template-refresh-target="modelTemplate">
+              <div data-model-template-id="ReorderChildrenActionSpec::Child##{child_2.id.value}-default_view" data-crumble--turbo--model-template-refresh-target="modelTemplate" class="orma--record--model-template-wrapper">
                 <div>Two</div>
               </div>
             </div>

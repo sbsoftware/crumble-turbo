@@ -49,7 +49,7 @@ module Orma::ModelTemplateSpec
 
     it "styles the model template wrapper to preserve its container dimensions" do
       expected_css = <<-CSS
-      .orma--record--model-template-wrapper {
+      .orma--record--model-template-wrapper, [data-crumble--turbo--model-template-refresh-target='modelTemplate'] {
         width: 100%;
         height: 100%;
       }

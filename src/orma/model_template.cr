@@ -11,7 +11,7 @@ class Orma::Record
   css_class ModelTemplateWrapper
 
   style do
-    rule ModelTemplateWrapper do
+    rule ModelTemplateWrapper, Crumble::Turbo::ModelTemplateRefreshController.model_template_target do
       width 100.percent
       height 100.percent
     end

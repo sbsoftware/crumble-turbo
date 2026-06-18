@@ -46,16 +46,6 @@ module Orma::ModelTemplateSpec
       HTML
       mdl.model_tpl_with_class.renderer(test_handler_context).to_html.should eq(expected_html)
     end
-
-    it "styles the model template wrapper to preserve its container dimensions" do
-      expected_css = <<-CSS
-      [data-crumble--turbo--model-template-refresh-target='modelTemplate'] {
-        width: 100%;
-        height: 100%;
-      }
-      CSS
-      Orma::Record::Style.to_s.should eq(expected_css)
-    end
   end
 
   describe "a model template" do

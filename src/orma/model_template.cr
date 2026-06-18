@@ -8,10 +8,8 @@ require "../stimulus_controllers/model_template_refresh_controller"
 class Orma::Record
   annotation ModelTemplateMethod; end
 
-  css_class ModelTemplateWrapper
-
   style do
-    rule ModelTemplateWrapper, Crumble::Turbo::ModelTemplateRefreshController.model_template_target do
+    rule Crumble::Turbo::ModelTemplateRefreshController.model_template_target do
       width 100.percent
       height 100.percent
     end
@@ -52,7 +50,7 @@ class Orma::Record
         forward_missing_to model_template.model
 
         def wrapper_attributes
-          arr = [Crumble::Turbo::ModelTemplateRefreshController.model_template_target, ModelTemplateWrapper]
+          arr = [Crumble::Turbo::ModelTemplateRefreshController.model_template_target]
           {% if wrapper_attributes %}
             arr + {{wrapper_attributes}}
           {% end %}

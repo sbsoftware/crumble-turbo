@@ -55,7 +55,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
       expected_html = <<-HTML.squish
       <turbo-stream action="replace" targets="[data-model-template-id='Crumble::Turbo::ModelTemplateRefreshResourceSpec::MyModel##{model.id.value}-the_view']">
         <template>
-          <div data-model-template-id="Crumble::Turbo::ModelTemplateRefreshResourceSpec::MyModel##{model.id.value}-the_view" data-crumble--turbo--model-template-refresh-target="modelTemplate" class="orma--record--model-template-wrapper">
+          <div data-model-template-id="Crumble::Turbo::ModelTemplateRefreshResourceSpec::MyModel##{model.id.value}-the_view" data-crumble--turbo--model-template-refresh-target="modelTemplate">
             <div>
               <span>Yoda</span>
               <span>#{ModelTemplateRefreshResource.uri_path}</span>
@@ -102,7 +102,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
       expected_html = <<-HTML.squish
       <turbo-stream action="replace" targets="[data-model-template-id='Crumble::Turbo::ModelTemplateRefreshResourceSpec::MyModel##{model.id.value}-the_view']">
         <template>
-          <div data-model-template-id="Crumble::Turbo::ModelTemplateRefreshResourceSpec::MyModel##{model.id.value}-the_view" data-crumble--turbo--model-template-refresh-target="modelTemplate" class="orma--record--model-template-wrapper">
+          <div data-model-template-id="Crumble::Turbo::ModelTemplateRefreshResourceSpec::MyModel##{model.id.value}-the_view" data-crumble--turbo--model-template-refresh-target="modelTemplate">
             <div>
               <span>Yoda</span>
               <span>#{ModelTemplateRefreshResource.uri_path}</span>

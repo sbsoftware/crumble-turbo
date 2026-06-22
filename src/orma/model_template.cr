@@ -8,6 +8,13 @@ require "../stimulus_controllers/model_template_refresh_controller"
 class Orma::Record
   annotation ModelTemplateMethod; end
 
+  style do
+    rule Crumble::Turbo::ModelTemplateRefreshController.model_template_target do
+      width 100.percent
+      height 100.percent
+    end
+  end
+
   macro model_template(method_name, wrapper_attributes = nil, &blk)
     private struct {{method_name.id.stringify.camelcase.id}}Template
       getter model : {{@type}}

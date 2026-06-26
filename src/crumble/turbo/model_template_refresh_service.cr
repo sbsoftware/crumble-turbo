@@ -1,10 +1,11 @@
 require "../../turbo_stream"
 require "../../orma/model_template"
+require "opentelemetry-sdk"
 
 module Crumble
   module Turbo
     module ModelTemplateRefreshService
-      record Subscription, ctx : ::Crumble::Server::HandlerContext, channel : Channel(TurboStream(IdentifiableView))
+      record Subscription, ctx : ::Crumble::Server::HandlerContext, channel : Channel(TurboStream(IdentifiableView)), connection_span_context : OpenTelemetry::SpanContext?
 
       @@subscriptions = {} of ::Crumble::Server::SessionKey => Subscription
       @@model_template_subscriptions = {} of String => Set(::Crumble::Server::SessionKey)
@@ -17,7 +18,7 @@ module Crumble
         end
 
         channel = Channel(TurboStream(IdentifiableView)).new
-        @@subscriptions[id] = Subscription.new(ctx, channel)
+        @@subscriptions[id] = Subscription.new(ctx, channel, OpenTelemetry.current_span.try(&.context))
 
         channel
       end
@@ -135,12 +136,32 @@ module Crumble
         return false if subscription.channel.closed?
 
         spawn do
-          subscription.channel.send(model_template.renderer(subscription.ctx).turbo_stream)
+          trace = trace_for_model_template_send(subscription)
+          trace.in_span("SSE model template transmission") do |span|
+            span.producer!
+            span["crumble.turbo.model_template.id"] = model_template.dom_id.attr_value
+            span["crumble.session.id"] = id.to_s
+            if connection_span_context = subscription.connection_span_context
+              span.add_link(connection_span_context, {"crumble.link.type" => "sse.connection"})
+            end
+
+            subscription.channel.send(model_template.renderer(subscription.ctx).turbo_stream)
+          end
         rescue e : Channel::ClosedError
           # discard
         end
 
         true
+      end
+
+      private def self.trace_for_model_template_send(subscription) : OpenTelemetry::Trace
+        trace = OpenTelemetry.trace_provider.trace
+        if connection_span_context = subscription.connection_span_context
+          trace.trace_id = connection_span_context.trace_id
+          trace.span_context.trace_id = connection_span_context.trace_id
+        end
+
+        trace
       end
 
       private def self.parse_model_template_id(model_template_id : String) : {String, String, String}?

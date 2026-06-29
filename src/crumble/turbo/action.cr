@@ -7,7 +7,7 @@ module Crumble::Turbo
     def reset_form
       return unless (request_form = form).submitted? && request_form.valid?
 
-      @form = nil
+      @form = fresh_form
     end
   end
 
@@ -130,6 +130,10 @@ module Crumble::Turbo
         else
           Form.new(ctx)
         end
+      end
+
+      def fresh_form : Form
+        Form.new(ctx)
       end
 
       include ::Crumble::Turbo::RequestBackedFormReset

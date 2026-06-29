@@ -62,6 +62,10 @@ module Orma
         end
       end
 
+      def fresh_form : Form
+        Form.new(ctx, model)
+      end
+
       include ::Crumble::Turbo::RequestBackedFormReset
     end
 

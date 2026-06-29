@@ -5,6 +5,8 @@ require "opentelemetry-sdk"
 module Crumble
   module Turbo
     module ModelTemplateRefreshService
+      alias SessionFilter = ::Crumble::Server::SessionKey | Enumerable(::Crumble::Server::SessionKey)
+
       record Subscription, ctx : ::Crumble::Server::HandlerContext, channel : Channel(TurboStream(IdentifiableView)), connection_span_context : OpenTelemetry::SpanContext?
 
       @@subscriptions = {} of ::Crumble::Server::SessionKey => Subscription
@@ -36,14 +38,14 @@ module Crumble
         (@@model_template_subscriptions[model_template_id] ||= Set(::Crumble::Server::SessionKey).new) << ctx.session.id
       end
 
-      def self.refresh_model_template_id(model_template_id : String, *, only : ::Crumble::Server::SessionKey | Enumerable(::Crumble::Server::SessionKey)? = nil) : Nil
+      def self.refresh_model_template_id(model_template_id : String, *, only : SessionFilter? = nil, except : SessionFilter? = nil) : Nil
         return unless parsed = parse_model_template_id(model_template_id)
 
         model_class_name, model_id_str, template_name = parsed
-        refresh_model_template(model_class_name, model_id_str, template_name, only: only)
+        refresh_model_template(model_class_name, model_id_str, template_name, only: only, except: except)
       end
 
-      def self.refresh_model_template(model_class_name : String, model_id : String | Int32 | Int64, template_name : String, *, only : ::Crumble::Server::SessionKey | Enumerable(::Crumble::Server::SessionKey)? = nil)
+      def self.refresh_model_template(model_class_name : String, model_id : String | Int32 | Int64, template_name : String, *, only : SessionFilter? = nil, except : SessionFilter? = nil)
         {% begin %}
           case model_class_name
             {% for klass in ::Orma::Record.all_subclasses.reject(&.abstract?) %}
@@ -91,7 +93,7 @@ module Crumble
               case template_name
                 {% for method in klass.methods.select { |m| m.annotation(::Orma::Record::ModelTemplateMethod) } %}
                 when {{method.name.stringify}}
-                  notify(%model.{{method.name}}, only: only)
+                  notify(%model.{{method.name}}, only: only, except: except)
                 {% end %}
               end
             {% end %}
@@ -99,24 +101,37 @@ module Crumble
         {% end %}
       end
 
-      def self.notify(model_template, *, only : ::Crumble::Server::SessionKey | Enumerable(::Crumble::Server::SessionKey)? = nil)
+      def self.notify(model_template, *, only : SessionFilter? = nil, except : SessionFilter? = nil)
         return unless ids = @@model_template_subscriptions[model_template.dom_id.attr_value]?
 
         stale_ids = Set(::Crumble::Server::SessionKey).new
+        excluded_ids = Set(::Crumble::Server::SessionKey).new
+
+        case except
+        in Nil
+        in ::Crumble::Server::SessionKey
+          excluded_ids << except
+        in Enumerable(::Crumble::Server::SessionKey)
+          except.each { |id| excluded_ids << id }
+        end
 
         case only
         in Nil
           ids.each do |id|
+            next if excluded_ids.includes?(id)
+
             stale_ids << id unless send_model_template_to_subscription(model_template, id)
           end
         in ::Crumble::Server::SessionKey
           id = only
           return unless ids.includes?(id)
+          return if excluded_ids.includes?(id)
 
           stale_ids << id unless send_model_template_to_subscription(model_template, id)
         in Enumerable(::Crumble::Server::SessionKey)
           only.each do |id|
             next unless ids.includes?(id)
+            next if excluded_ids.includes?(id)
 
             stale_ids << id unless send_model_template_to_subscription(model_template, id)
           end

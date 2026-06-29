@@ -106,7 +106,7 @@ module Orma
       if templates = refreshed_model_templates
         templates.each do |tpl|
           tpl.renderer(ctx).turbo_stream.to_html(ctx.response)
-          tpl.refresh!
+          tpl.refresh!(except: ctx.session.id)
         end
       end
     end

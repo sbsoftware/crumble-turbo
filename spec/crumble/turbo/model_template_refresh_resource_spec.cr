@@ -14,6 +14,17 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
     end
   end
 
+  class SessionModel < TestRecord
+    id_column id : Int64
+    column name : String
+
+    model_template :the_view do
+      div do
+        span { ctx.session.model_template_refresh_value }
+      end
+    end
+  end
+
   class MultilineModel < TestRecord
     id_column id : Int64
     column transcript : String
@@ -132,6 +143,56 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
             <div>
               <span>Yoda</span>
               <span>#{ModelTemplateRefreshResource.uri_path}</span>
+            </div>
+          </div>
+        </template>
+      </turbo-stream>
+      HTML
+
+      res_str.should contain(expected_html)
+    end
+
+    it "reloads the subscriber session before rendering model template refreshes" do
+      model = SessionModel.create(name: "Yoda")
+
+      session_store = ::Crumble::Server::MemorySessionStore.new
+      session = ::Crumble::Server::Session.new
+      session.update!(model_template_refresh_value: "initial")
+      session_store.set(session)
+
+      res_str = String.build do |res_io|
+        headers = HTTP::Headers.new
+        cookies = HTTP::Cookies.new
+        cookies[::Crumble::Server::RequestContext::SESSION_COOKIE_NAME] = session.id.to_s
+        cookies.add_request_headers(headers)
+
+        ctx = ::Crumble::Server::TestRequestContext.new(resource: ModelTemplateRefreshResource.uri_path, method: "GET", response_io: res_io, headers: headers, session_store: session_store)
+        ModelTemplateRefreshResource.handle(ctx)
+
+        spawn do
+          if upgrade_handler = ctx.response.upgrade_handler
+            upgrade_handler.call(res_io)
+          end
+        end
+
+        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: ModelTemplateRefreshResource.uri_path, method: "POST", body: "[\"#{model.the_view.dom_id.attr_value}\"]", headers: headers, session_store: session_store)
+        ModelTemplateRefreshResource.handle(post_ctx)
+
+        updated_session = ::Crumble::Server::Session.new(session.id)
+        updated_session.update!(model_template_refresh_value: "updated")
+        session_store.set(updated_session)
+
+        model.the_view.refresh!
+
+        3.times { Fiber.yield }
+      end
+
+      expected_html = <<-HTML.squish
+      <turbo-stream action="replace" targets="[data-model-template-id='Crumble::Turbo::ModelTemplateRefreshResourceSpec::SessionModel##{model.id.value}-the_view']">
+        <template>
+          <div data-model-template-id="Crumble::Turbo::ModelTemplateRefreshResourceSpec::SessionModel##{model.id.value}-the_view" data-crumble--turbo--model-template-refresh-target="modelTemplate">
+            <div>
+              <span>updated</span>
             </div>
           </div>
         </template>

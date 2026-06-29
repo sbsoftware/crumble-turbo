@@ -145,6 +145,7 @@ module Crumble
               span.add_link(connection_span_context, {"crumble.link.type" => "sse.connection"})
             end
 
+            subscription.ctx.session.reload
             subscription.channel.send(model_template.renderer(subscription.ctx).turbo_stream)
           end
         rescue e : Channel::ClosedError

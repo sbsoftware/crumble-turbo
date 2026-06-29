@@ -13,6 +13,10 @@ class String
   end
 end
 
+class Crumble::Server::Session
+  property model_template_refresh_value : String?
+end
+
 abstract class TestRecord < Orma::Record
   macro inherited
     {% unless @type.abstract? %}

@@ -172,8 +172,12 @@ describe "MyModel #add_child_action_template" do
       model = CreateChildSpec::MyModel.create(name: "Allowed")
       response = String.build do |io|
         ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/add_child_with_dynamic_options", body: URI::Params.encode({name: "Allowed"}), response_io: io)
-        CreateChildSpec::MyModel::AddChildWithDynamicOptionsAction.handle(ctx)
+        action = CreateChildSpec::MyModel::AddChildWithDynamicOptionsAction.new(ctx, model)
+        action.handle
         ctx.response.status_code.should eq(201)
+        action.form.name.should be_nil
+        action.form.submitted?.should be_false
+        action.form.errors.should be_nil
         ctx.response.flush
       end
 

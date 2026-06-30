@@ -59,6 +59,8 @@ module Crumble::Turbo::ActionFormRequestSpec
         action = PayloadAction.new(ctx)
         action.handle
         action.form.name.should be_nil
+        action.form.submitted?.should be_false
+        action.form.errors.should be_nil
         ctx.response.flush
       end
 

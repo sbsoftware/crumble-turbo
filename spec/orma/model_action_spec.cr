@@ -131,6 +131,62 @@ module Orma::ModelActionSpec
       res.should_not contain("data-model-template-id")
       res.should contain("data-model-action-template-id")
     end
+
+    it "does not broadcast a model template refresh back to the submitting session" do
+      model = Orma::ModelActionSpec::MyModel.create(some_number: 3)
+      model_id = model.id.value
+      model_template_id = model.some_number_view.dom_id.attr_value
+      session_store = Crumble::Server::MemorySessionStore.new
+      submitting_session = Crumble::Server::Session.new
+      other_session = Crumble::Server::Session.new
+      session_store.set(submitting_session)
+      session_store.set(other_session)
+      submitting_headers = HTTP::Headers.new
+      other_headers = HTTP::Headers.new
+      submitting_cookies = HTTP::Cookies.new
+      other_cookies = HTTP::Cookies.new
+      submitting_cookies[Crumble::Server::RequestContext::SESSION_COOKIE_NAME] = submitting_session.id.to_s
+      other_cookies[Crumble::Server::RequestContext::SESSION_COOKIE_NAME] = other_session.id.to_s
+      submitting_cookies.add_request_headers(submitting_headers)
+      other_cookies.add_request_headers(other_headers)
+      submitting_subscriber_request_ctx = Crumble::Server::TestRequestContext.new(method: "GET", resource: Crumble::Turbo::ModelTemplateRefreshResource.uri_path, headers: submitting_headers, session_store: session_store)
+      other_subscriber_request_ctx = Crumble::Server::TestRequestContext.new(method: "GET", resource: Crumble::Turbo::ModelTemplateRefreshResource.uri_path, headers: other_headers, session_store: session_store)
+      submitting_subscriber_ctx = Crumble::Server::HandlerContext.new(submitting_subscriber_request_ctx, TestViewHandler.new(submitting_subscriber_request_ctx))
+      other_subscriber_ctx = Crumble::Server::HandlerContext.new(other_subscriber_request_ctx, TestViewHandler.new(other_subscriber_request_ctx))
+      submitting_channel = Crumble::Turbo::ModelTemplateRefreshService.subscribe(submitting_subscriber_ctx)
+      other_channel = Crumble::Turbo::ModelTemplateRefreshService.subscribe(other_subscriber_ctx)
+
+      begin
+        Crumble::Turbo::ModelTemplateRefreshService.register(submitting_subscriber_ctx, model_template_id)
+        Crumble::Turbo::ModelTemplateRefreshService.register(other_subscriber_ctx, model_template_id)
+
+        response = String.build do |io|
+          post_ctx = Crumble::Server::TestRequestContext.new(response_io: io, method: "POST", resource: "/a/orma/model_action_spec/my_model/#{model_id}/inc_some_number", headers: submitting_headers, session_store: session_store)
+          MyModel::IncSomeNumberAction.handle(post_ctx)
+          post_ctx.response.flush
+        end
+
+        3.times { Fiber.yield }
+        response.scan("data-model-template-id=\"#{model_template_id}\"").size.should eq(1)
+
+        submitting_refresh = nil
+        select
+        when submitting_refresh = submitting_channel.receive
+        when timeout(10.milliseconds)
+        end
+        submitting_refresh.should be_nil
+
+        other_refresh = nil
+        select
+        when other_refresh = other_channel.receive
+        when timeout(1.second)
+        end
+        other_refresh.should_not be_nil
+      ensure
+        Crumble::Turbo::ModelTemplateRefreshService.unsubscribe(submitting_subscriber_ctx)
+        Crumble::Turbo::ModelTemplateRefreshService.unsubscribe(other_subscriber_ctx)
+      end
+    end
   end
 
   describe "policies for model actions" do

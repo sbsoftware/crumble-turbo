@@ -6,18 +6,66 @@ module Crumble
       targets :model_template
 
       js_method :connect do
-        this.evt_source = EventSource.new(Crumble::Turbo::ModelTemplateRefreshResource.uri_path.to_js_ref)
-        Turbo.session.connectStreamSource(this.evt_source)
-
-        that = this
-        this.evt_source.addEventListener("open") do
-          that.connected = true
-          that.register_model_templates._call
-        end
+        this.connected = false
+        this.reconnect_attempts = 0
+        this.connect_event_source._call
       end
 
       js_method :disconnect do
-        this.evt_source.close._call
+        this.connected = false
+        this.clear_reconnect_timeout._call
+
+        if this.evt_source
+          Turbo.session.disconnectStreamSource(this.evt_source)
+          this.evt_source.close._call
+          _literal_js("this.evt_source = undefined;")
+        end
+      end
+
+      js_method :connect_event_source do
+        this.clear_reconnect_timeout._call
+        this.evt_source = EventSource.new(Crumble::Turbo::ModelTemplateRefreshResource.uri_path.to_js_ref)
+        Turbo.session.connectStreamSource(this.evt_source)
+        that = this
+
+        this.evt_source.addEventListener("open") do
+          that.connected = true
+          that.reconnect_attempts = 0
+          that.register_model_templates(true)
+        end
+
+        this.evt_source.addEventListener("error") do
+          that.connected = false
+          that.schedule_reconnect._call
+        end
+      end
+
+      js_method :clear_reconnect_timeout do
+        if this.reconnect_timeout
+          clearTimeout(this.reconnect_timeout)
+          _literal_js("this.reconnect_timeout = undefined;")
+        end
+      end
+
+      js_method :schedule_reconnect do
+        return if this.reconnect_timeout
+
+        if this.evt_source
+          Turbo.session.disconnectStreamSource(this.evt_source)
+          this.evt_source.close._call
+          _literal_js("this.evt_source = undefined;")
+        end
+
+        delay = Math.min(100 * Math.pow(2, this.reconnect_attempts), 30000)
+        this.reconnect_attempts = this.reconnect_attempts + 1
+        that = this
+
+        reconnect = -> {
+          _literal_js("that.reconnect_timeout = undefined;")
+          that.connect_event_source._call
+        }
+
+        this.reconnect_timeout = setTimeout(reconnect, delay)
       end
 
       js_method :register_model_templates do |force|
@@ -39,22 +87,28 @@ module Crumble
         if model_template_ids_changed || force
           this.model_template_ids = model_template_ids
 
-          fetch(
-            Crumble::Turbo::ModelTemplateRefreshResource.uri_path.to_js_ref,
-            {
-              "method" => "POST",
-              "body"   => JSON.stringify(model_template_ids),
-            }
-          )
+          if this.connected
+            _literal_js("this.pending_model_template_ids = undefined;")
+
+            fetch(
+              Crumble::Turbo::ModelTemplateRefreshResource.uri_path.to_js_ref,
+              {
+                "method" => "POST",
+                "body"   => JSON.stringify(model_template_ids),
+              }
+            )
+          else
+            this.pending_model_template_ids = model_template_ids
+          end
         end
       end
 
       js_method :modelTemplateTargetConnected do
-        this.register_model_templates._call if this.connected
+        this.register_model_templates._call
       end
 
       js_method :modelTemplateTargetDisconnected do
-        this.register_model_templates._call if this.connected
+        this.register_model_templates._call
       end
     end
   end

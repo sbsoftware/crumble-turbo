@@ -88,8 +88,6 @@ module Crumble
           this.model_template_ids = model_template_ids
 
           if this.connected
-            this.pending_model_template_ids = nil
-
             fetch(
               Crumble::Turbo::ModelTemplateRefreshResource.uri_path.to_js_ref,
               {
@@ -97,8 +95,6 @@ module Crumble
                 "body"   => JSON.stringify(model_template_ids),
               }
             )
-          else
-            this.pending_model_template_ids = model_template_ids
           end
         end
       end

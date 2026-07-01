@@ -18,7 +18,7 @@ module Crumble
         if this.evt_source
           Turbo.session.disconnectStreamSource(this.evt_source)
           this.evt_source.close._call
-          _literal_js("this.evt_source = undefined;")
+          this.evt_source = nil
         end
       end
 
@@ -43,7 +43,7 @@ module Crumble
       js_method :clear_reconnect_timeout do
         if this.reconnect_timeout
           clearTimeout(this.reconnect_timeout)
-          _literal_js("this.reconnect_timeout = undefined;")
+          this.reconnect_timeout = nil
         end
       end
 
@@ -53,7 +53,7 @@ module Crumble
         if this.evt_source
           Turbo.session.disconnectStreamSource(this.evt_source)
           this.evt_source.close._call
-          _literal_js("this.evt_source = undefined;")
+          this.evt_source = nil
         end
 
         delay = Math.min(100 * Math.pow(2, this.reconnect_attempts), 30000)
@@ -61,7 +61,7 @@ module Crumble
         that = this
 
         reconnect = -> {
-          _literal_js("that.reconnect_timeout = undefined;")
+          that.reconnect_timeout = nil
           that.connect_event_source._call
         }
 
@@ -88,7 +88,7 @@ module Crumble
           this.model_template_ids = model_template_ids
 
           if this.connected
-            _literal_js("this.pending_model_template_ids = undefined;")
+            this.pending_model_template_ids = nil
 
             fetch(
               Crumble::Turbo::ModelTemplateRefreshResource.uri_path.to_js_ref,

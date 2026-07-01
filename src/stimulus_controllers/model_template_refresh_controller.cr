@@ -87,24 +87,26 @@ module Crumble
         if model_template_ids_changed || force
           this.model_template_ids = model_template_ids
 
-          if this.connected
-            fetch(
-              Crumble::Turbo::ModelTemplateRefreshResource.uri_path.to_js_ref,
-              {
-                "method" => "POST",
-                "body"   => JSON.stringify(model_template_ids),
-              }
-            )
-          end
+          fetch(
+            Crumble::Turbo::ModelTemplateRefreshResource.uri_path.to_js_ref,
+            {
+              "method" => "POST",
+              "body"   => JSON.stringify(model_template_ids),
+            }
+          )
         end
       end
 
       js_method :modelTemplateTargetConnected do
-        this.register_model_templates._call
+        if this.connected
+          this.register_model_templates._call
+        end
       end
 
       js_method :modelTemplateTargetDisconnected do
-        this.register_model_templates._call
+        if this.connected
+          this.register_model_templates._call
+        end
       end
     end
   end

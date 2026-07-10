@@ -8,12 +8,22 @@ module Crumble
       js_method :connect do
         this.connected = false
         this.reconnect_attempts = 0
-        this.connect_event_source._call
+        that = this
+        this.connect_event_source_after_load = -> {
+          that.connect_event_source._call
+        }
+
+        if document.readyState == "complete"
+          this.connect_event_source._call
+        else
+          window.addEventListener("load", this.connect_event_source_after_load)
+        end
       end
 
       js_method :disconnect do
         this.connected = false
         this.clear_reconnect_timeout._call
+        window.removeEventListener("load", this.connect_event_source_after_load) if this.connect_event_source_after_load
 
         if this.evt_source
           Turbo.session.disconnectStreamSource(this.evt_source)

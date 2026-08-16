@@ -60,6 +60,41 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
   end
 
   describe "when an SSE connection is open" do
+    it "keeps multiple connections for the same session subscribed" do
+      model = MyModel.create(name: "Yoda")
+      session_store = ::Crumble::Server::MemorySessionStore.new
+      session = ::Crumble::Server::Session.new
+      session_store.set(session)
+      headers = HTTP::Headers.new
+      cookies = HTTP::Cookies.new
+      cookies[::Crumble::Server::RequestContext::SESSION_COOKIE_NAME] = session.id.to_s
+      cookies.add_request_headers(headers)
+      first_request_ctx = ::Crumble::Server::TestRequestContext.new(headers: headers, session_store: session_store)
+      second_request_ctx = ::Crumble::Server::TestRequestContext.new(headers: headers, session_store: session_store)
+      first_ctx = ::Crumble::Server::HandlerContext.new(first_request_ctx, TestViewHandler.new(first_request_ctx))
+      second_ctx = ::Crumble::Server::HandlerContext.new(second_request_ctx, TestViewHandler.new(second_request_ctx))
+      first_channel = ModelTemplateRefreshService.subscribe(first_ctx)
+      second_channel = ModelTemplateRefreshService.subscribe(second_ctx)
+
+      begin
+        ModelTemplateRefreshService.register(first_ctx, model.the_view.dom_id.attr_value)
+        model.the_view.refresh!
+        3.times { Fiber.yield }
+
+        first_channel.receive.should_not be_nil
+        second_channel.receive.should_not be_nil
+
+        ModelTemplateRefreshService.unsubscribe(first_ctx, first_channel)
+        first_channel.close
+        model.the_view.refresh!
+        3.times { Fiber.yield }
+
+        second_channel.receive.should_not be_nil
+      ensure
+        ModelTemplateRefreshService.unsubscribe(second_ctx)
+      end
+    end
+
     it "should initially refresh registered model templates" do
       model = MyModel.create(name: "Yoda")
 

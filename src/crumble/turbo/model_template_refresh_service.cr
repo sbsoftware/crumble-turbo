@@ -9,18 +9,14 @@ module Crumble
 
       record Subscription, ctx : ::Crumble::Server::HandlerContext, channel : Channel(TurboStream(IdentifiableView)), connection_span_context : OpenTelemetry::SpanContext?
 
-      @@subscriptions = {} of ::Crumble::Server::SessionKey => Subscription
+      @@subscriptions = {} of ::Crumble::Server::SessionKey => Array(Subscription)
       @@model_template_subscriptions = {} of String => Set(::Crumble::Server::SessionKey)
 
       def self.subscribe(ctx : ::Crumble::Server::HandlerContext) : Channel(TurboStream(IdentifiableView))
         id = ctx.session.id
 
-        if existing_subscription = @@subscriptions[id]?
-          existing_subscription.channel.close
-        end
-
         channel = Channel(TurboStream(IdentifiableView)).new
-        @@subscriptions[id] = Subscription.new(ctx, channel, OpenTelemetry.current_span.try(&.context))
+        (@@subscriptions[id] ||= [] of Subscription) << Subscription.new(ctx, channel, OpenTelemetry.current_span.try(&.context))
 
         channel
       end
@@ -28,10 +24,18 @@ module Crumble
       def self.unsubscribe(ctx : ::Crumble::Server::HandlerContext) : Nil
         id = ctx.session.id
 
-        if subscription = @@subscriptions[id]?
-          subscription.channel.close
+        if subscriptions = @@subscriptions[id]?
+          subscriptions.each { |subscription| subscription.channel.close }
           @@subscriptions.delete(id)
         end
+      end
+
+      def self.unsubscribe(ctx : ::Crumble::Server::HandlerContext, channel : Channel(TurboStream(IdentifiableView))) : Nil
+        id = ctx.session.id
+        return unless subscriptions = @@subscriptions[id]?
+
+        subscriptions.reject! { |subscription| subscription.channel == channel }
+        @@subscriptions.delete(id) if subscriptions.empty?
       end
 
       def self.register(ctx : Crumble::Server::HandlerContext, model_template_id : String)
@@ -140,31 +144,35 @@ module Crumble
         stale_ids.each do |id|
           ids.delete(id)
 
-          if (subscription = @@subscriptions[id]?) && subscription.channel.closed?
+          if (subscriptions = @@subscriptions[id]?) && subscriptions.all?(&.channel.closed?)
             @@subscriptions.delete(id)
           end
         end
       end
 
       private def self.send_model_template_to_subscription(model_template, id : ::Crumble::Server::SessionKey) : Bool
-        return false unless subscription = @@subscriptions[id]?
-        return false if subscription.channel.closed?
+        return false unless subscriptions = @@subscriptions[id]?
+        active_subscriptions = subscriptions.reject(&.channel.closed?)
+        return false if active_subscriptions.empty?
 
-        spawn do
-          trace = trace_for_model_template_send(subscription)
-          trace.in_span("SSE model template transmission") do |span|
-            span.producer!
-            span["crumble.turbo.model_template.id"] = model_template.dom_id.attr_value
-            span["crumble.session.id"] = id.to_s
-            if connection_span_context = subscription.connection_span_context
-              span.add_link(connection_span_context, {"crumble.link.type" => "sse.connection"})
+        # A browser session can have multiple tabs, each with its own SSE channel.
+        active_subscriptions.each do |subscription|
+          spawn do
+            trace = trace_for_model_template_send(subscription)
+            trace.in_span("SSE model template transmission") do |span|
+              span.producer!
+              span["crumble.turbo.model_template.id"] = model_template.dom_id.attr_value
+              span["crumble.session.id"] = id.to_s
+              if connection_span_context = subscription.connection_span_context
+                span.add_link(connection_span_context, {"crumble.link.type" => "sse.connection"})
+              end
+
+              subscription.ctx.session.reload
+              subscription.channel.send(model_template.renderer(subscription.ctx).turbo_stream)
             end
-
-            subscription.ctx.session.reload
-            subscription.channel.send(model_template.renderer(subscription.ctx).turbo_stream)
+          rescue e : Channel::ClosedError
+            # discard
           end
-        rescue e : Channel::ClosedError
-          # discard
         end
 
         true

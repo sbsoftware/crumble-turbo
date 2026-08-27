@@ -151,7 +151,7 @@ module Crumble
         return false if subscription.channel.closed?
 
         spawn do
-          trace = trace_for_model_template_send(subscription)
+          trace = OpenTelemetry.trace_provider.trace
           trace.in_span("SSE model template transmission") do |span|
             span.producer!
             span["crumble.turbo.model_template.id"] = model_template.dom_id.attr_value
@@ -168,10 +168,6 @@ module Crumble
         end
 
         true
-      end
-
-      private def self.trace_for_model_template_send(subscription) : OpenTelemetry::Trace
-        OpenTelemetry.trace_provider.trace
       end
 
       private def self.parse_model_template_id(model_template_id : String) : {String, String, String}?

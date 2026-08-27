@@ -278,7 +278,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
       decoded_payload.should contain("<pre>line 1\r\nline 2\r\nline 3</pre>")
     end
 
-    it "creates linked root spans for model template transmissions" do
+    it "creates independently traced root spans linked to the SSE connection" do
       model = MyModel.create(name: "Yoda")
       memory = IO::Memory.new
       original_config = OpenTelemetry.config
@@ -317,7 +317,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
         connection_span = spans.find { |span| span["name"].as_s == "GET #{ModelTemplateRefreshResource.uri_path}" }.not_nil!
         template_span = spans.find { |span| span["name"].as_s == "SSE model template transmission" }.not_nil!
 
-        template_span["traceId"].as_s.should eq(connection_span["traceId"].as_s)
+        template_span["traceId"].as_s.should_not eq(connection_span["traceId"].as_s)
         template_span["parentSpanId"].raw.should be_nil
         template_span["attributes"]["crumble.turbo.model_template.id"].as_s.should eq(model.the_view.dom_id.attr_value)
         template_span["links"].as_a.size.should eq(1)

@@ -7,7 +7,7 @@ require "../crumble/turbo/action_registry"
 class Orma::Record
   macro model_action(name, refreshed_model_template, base_class = Orma::ModelAction, &blk)
     class {{name.id.stringify.camelcase.id}}Action < {{base_class}}
-      alias ModelFormModel = ::{{@type}}
+      alias ModelFormModel = ::{{@type.resolve}}
 
       getter model : ::{{@type}}
 

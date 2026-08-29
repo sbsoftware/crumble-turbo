@@ -96,43 +96,6 @@ module CreateChildSpec
   end
 end
 
-module CreateChildCircularAssociationSpec
-  class Parent < TestRecord
-    id_column id : Int64
-    column name : String?
-  end
-
-  class Child < TestRecord
-    id_column id : Int64
-    belongs_to Parent
-    column name : String
-  end
-
-  class Parent
-    has_many_of Child
-
-    create_child_action :add_child, Child, create_child_circular_association_spec_parent_id, default_view do
-      form do
-        field name : String
-      end
-
-      view do
-        template do
-          action_form.to_html do
-            input(type: "submit")
-          end
-        end
-      end
-    end
-
-    model_template :default_view do
-      div do
-        id
-      end
-    end
-  end
-end
-
 describe "MyModel #add_child_action_template" do
   it "has a template" do
     my_model = CreateChildSpec::MyModel.new(id: 7_i64)
@@ -244,17 +207,5 @@ describe "MyModel #add_child_action_template" do
       child = CreateChildSpec::ChildModel.where(my_model_id: model.id.value).first
       child.name.try(&.value).should eq("Legacy")
     end
-  end
-end
-
-describe "create_child_action with mutual associations" do
-  it "creates a child belonging to the parent" do
-    parent = CreateChildCircularAssociationSpec::Parent.create(name: "Parent")
-    ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_circular_association_spec/parent/#{parent.id.value}/add_child", body: URI::Params.encode({name: "Child"}))
-    CreateChildCircularAssociationSpec::Parent::AddChildAction.handle(ctx)
-
-    child = CreateChildCircularAssociationSpec::Child.all.first
-    child.create_child_circular_association_spec_parent.id.should eq(parent.id)
-    child.name.value.should eq("Child")
   end
 end

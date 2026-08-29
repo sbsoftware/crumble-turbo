@@ -1,7 +1,7 @@
 require "../spec_helper"
 require "uri"
 require "crumble/spec/test_request_context"
-require "../fixtures/create_child_circular_association/parent"
+require "../fixtures/create_child_circular_association/child"
 
 module CreateChildSpec
   class ChildModel < TestRecord

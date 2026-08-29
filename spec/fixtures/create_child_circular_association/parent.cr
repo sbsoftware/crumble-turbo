@@ -1,14 +1,9 @@
+require "./child"
+
 module CreateChildCircularAssociationSpec
   class Parent < TestRecord
     id_column id : Int64
     column name : String?
-  end
-end
-
-require "./child"
-
-module CreateChildCircularAssociationSpec
-  class Parent
     has_many_of Child
 
     create_child_action :add_child, Child, create_child_circular_association_spec_parent_id, default_view do

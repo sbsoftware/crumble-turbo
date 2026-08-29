@@ -179,13 +179,7 @@ module Crumble
       end
 
       private def self.trace_for_model_template_send(subscription) : OpenTelemetry::Trace
-        trace = OpenTelemetry.trace_provider.trace
-        if connection_span_context = subscription.connection_span_context
-          trace.trace_id = connection_span_context.trace_id
-          trace.span_context.trace_id = connection_span_context.trace_id
-        end
-
-        trace
+        OpenTelemetry.trace_provider.trace
       end
 
       private def self.parse_model_template_id(model_template_id : String) : {String, String, String}?

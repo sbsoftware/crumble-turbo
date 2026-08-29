@@ -158,8 +158,7 @@ module Crumble
         # A browser session can have multiple tabs, each with its own SSE channel.
         active_subscriptions.each do |subscription|
           spawn do
-            trace = trace_for_model_template_send(subscription)
-            trace.in_span("SSE model template transmission") do |span|
+            OpenTelemetry.trace_provider.trace.in_span("SSE model template transmission") do |span|
               span.producer!
               span["crumble.turbo.model_template.id"] = model_template.dom_id.attr_value
               span["crumble.session.id"] = id.to_s
@@ -176,16 +175,6 @@ module Crumble
         end
 
         true
-      end
-
-      private def self.trace_for_model_template_send(subscription) : OpenTelemetry::Trace
-        trace = OpenTelemetry.trace_provider.trace
-        if connection_span_context = subscription.connection_span_context
-          trace.trace_id = connection_span_context.trace_id
-          trace.span_context.trace_id = connection_span_context.trace_id
-        end
-
-        trace
       end
 
       private def self.parse_model_template_id(model_template_id : String) : {String, String, String}?

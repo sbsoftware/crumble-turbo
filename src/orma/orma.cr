@@ -7,7 +7,7 @@ require "../crumble/turbo/action_registry"
 class Orma::Record
   macro model_action(name, refreshed_model_template, base_class = Orma::ModelAction, &blk)
     class {{name.id.stringify.camelcase.id}}Action < {{base_class}}
-      alias ModelFormModel = ::{{@type}}
+      alias ModelFormModel = ::{{@type.resolve}}
 
       getter model : ::{{@type}}
 
@@ -101,7 +101,7 @@ class Orma::Record
   macro create_child_action(name, child_class, parent_id_attr, tpl, &blk)
     model_action({{name}}, {{tpl}}, Orma::CreateChildAction) do
       def self.child_class : ::Orma::Record.class
-        {{child_class.resolve}}
+        {{child_class}}
       end
 
       def parent_params

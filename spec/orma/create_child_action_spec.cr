@@ -1,6 +1,7 @@
 require "../spec_helper"
 require "uri"
 require "crumble/spec/test_request_context"
+require "../fixtures/create_child_circular_association/child"
 
 module CreateChildSpec
   class ChildModel < TestRecord
@@ -93,6 +94,15 @@ module CreateChildSpec
         id
       end
     end
+  end
+end
+
+describe "create_child_action with mutual associations" do
+  it "renders an action whose child belongs to its parent" do
+    parent = CreateChildCircularAssociationSpec::Parent.new(id: 1_i64)
+    ctx = Crumble::Server::TestRequestContext.new
+
+    parent.add_child_action_template(ctx).to_html.should contain(%(<form action="/a/create_child_circular_association_spec/parent/1/add_child" method="POST">))
   end
 end
 

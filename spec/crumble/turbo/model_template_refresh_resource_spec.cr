@@ -1,5 +1,6 @@
 require "../../spec_helper"
 require "json"
+require "log/spec"
 
 module Crumble::Turbo::ModelTemplateRefreshResourceSpec
   class MyModel < TestRecord
@@ -78,6 +79,24 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
 
       begin
         ModelTemplateRefreshService.register(first_ctx, model.the_view.dom_id.attr_value)
+
+        previous_log_level = ModelTemplateRefreshService::LOGGER.level
+        begin
+          Log.capture(ModelTemplateRefreshService::LOGGER.source) do |logs|
+            ModelTemplateRefreshService::LOGGER.level = Log::Severity::Info
+            ModelTemplateRefreshService.log_subscriptions
+            logs.empty
+
+            ModelTemplateRefreshService::LOGGER.level = Log::Severity::Debug
+            ModelTemplateRefreshService.log_subscriptions
+            logs.check("a subscription log with session diagnostics") do |entry|
+              entry.severity.debug? && entry.message == "Active model template refresh subscription" && entry.data[:session_id].as_s == session.id.to_s && entry.data[:connection_uptime_seconds].as_f64 >= 0 && entry.data[:model_template_ids].as_a.any?(&.as_s.==(model.the_view.dom_id.attr_value))
+            end
+          end
+        ensure
+          ModelTemplateRefreshService::LOGGER.level = previous_log_level
+        end
+
         model.the_view.refresh!
         3.times { Fiber.yield }
 

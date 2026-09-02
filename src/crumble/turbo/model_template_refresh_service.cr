@@ -15,12 +15,14 @@ module Crumble
 
       @@subscriptions = {} of ::Crumble::Server::SessionKey => Array(Subscription)
       @@model_template_subscriptions = {} of String => Set(::Crumble::Server::SessionKey)
+      @@subscription_logger_started = false
 
       def self.subscribe(ctx : ::Crumble::Server::HandlerContext) : Channel(TurboStream(IdentifiableView))
         id = ctx.session.id
 
         channel = Channel(TurboStream(IdentifiableView)).new
         (@@subscriptions[id] ||= [] of Subscription) << Subscription.new(ctx, channel, OpenTelemetry.current_span.try(&.context), Time.instant)
+        start_subscription_logger
 
         channel
       end
@@ -211,11 +213,17 @@ module Crumble
         {model_class_name, model_id_str, template_name}
       end
 
-      # Keep diagnostics outside the SSE fibers so a slow log backend cannot delay refreshes.
-      spawn do
-        loop do
-          sleep LOG_INTERVAL
-          log_subscriptions
+      private def self.start_subscription_logger : Nil
+        return if @@subscription_logger_started || LOGGER.level != Log::Severity::Debug
+
+        @@subscription_logger_started = true
+
+        # Keep diagnostics outside the SSE fibers so a slow log backend cannot delay refreshes.
+        spawn do
+          loop do
+            sleep LOG_INTERVAL
+            log_subscriptions
+          end
         end
       end
     end

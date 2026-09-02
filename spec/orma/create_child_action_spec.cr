@@ -4,6 +4,8 @@ require "crumble/spec/test_request_context"
 require "../fixtures/create_child_circular_association/child"
 
 module CreateChildSpec
+  FORM_HEADERS = HTTP::Headers{"Content-Type" => "application/x-www-form-urlencoded"}
+
   class ChildModel < TestRecord
     id_column id : Int64
     column my_model_id : Int64
@@ -135,7 +137,7 @@ describe "MyModel #add_child_action_template" do
   context "when handling a request" do
     it "creates a new ChildModel when the before block returns true" do
       model = CreateChildSpec::MyModel.create(name: "Allowed")
-      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/add_child", body: URI::Params.encode({name: "Bla"}))
+      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/add_child", headers: CreateChildSpec::FORM_HEADERS, body: URI::Params.encode({name: "Bla"}))
       CreateChildSpec::MyModel::AddChildAction.handle(mock_ctx)
 
       child = CreateChildSpec::ChildModel.where(my_model_id: model.id.value).first
@@ -144,7 +146,7 @@ describe "MyModel #add_child_action_template" do
 
     it "returns 400 when the before block returns false" do
       model = CreateChildSpec::MyModel.create(name: "Blocked")
-      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/add_child", body: URI::Params.encode({name: "Bla"}))
+      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/add_child", headers: CreateChildSpec::FORM_HEADERS, body: URI::Params.encode({name: "Bla"}))
       before_count = CreateChildSpec::ChildModel.all.count
       CreateChildSpec::MyModel::AddChildAction.handle(mock_ctx)
       mock_ctx.response.status_code.should eq(400)
@@ -153,7 +155,7 @@ describe "MyModel #add_child_action_template" do
 
     it "creates a new ChildModel when there is no before block" do
       model = CreateChildSpec::MyModel.create(name: "Parent")
-      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/always_add_child", body: URI::Params.encode({name: "Bla"}))
+      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/always_add_child", headers: CreateChildSpec::FORM_HEADERS, body: URI::Params.encode({name: "Bla"}))
       CreateChildSpec::MyModel::AlwaysAddChildAction.handle(mock_ctx)
       mock_ctx.response.status_code.should eq(201)
 
@@ -166,7 +168,7 @@ describe "MyModel #add_child_action_template" do
       model = CreateChildSpec::MyModel.create(name: "Allowed")
       before_count = CreateChildSpec::ChildModel.where(my_model_id: model.id.value).count
       response = String.build do |io|
-        ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/add_child_with_dynamic_options", body: URI::Params.encode({name: ""}), response_io: io)
+        ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/add_child_with_dynamic_options", headers: CreateChildSpec::FORM_HEADERS, body: URI::Params.encode({name: ""}), response_io: io)
         CreateChildSpec::MyModel::AddChildWithDynamicOptionsAction.handle(ctx)
         ctx.response.status_code.should eq(200)
         ctx.response.flush
@@ -181,7 +183,7 @@ describe "MyModel #add_child_action_template" do
     it "resets submitted values after a valid model-aware form request" do
       model = CreateChildSpec::MyModel.create(name: "Allowed")
       response = String.build do |io|
-        ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/add_child_with_dynamic_options", body: URI::Params.encode({name: "Allowed"}), response_io: io)
+        ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/add_child_with_dynamic_options", headers: CreateChildSpec::FORM_HEADERS, body: URI::Params.encode({name: "Allowed"}), response_io: io)
         action = CreateChildSpec::MyModel::AddChildWithDynamicOptionsAction.new(ctx, model)
         action.handle
         ctx.response.status_code.should eq(201)
@@ -200,7 +202,7 @@ describe "MyModel #add_child_action_template" do
 
     it "creates children from model-aware forms without extra action ivars" do
       model = CreateChildSpec::MyModel.create(name: "Allowed")
-      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/add_child_with_dynamic_options", body: URI::Params.encode({name: "Allowed"}))
+      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/add_child_with_dynamic_options", headers: CreateChildSpec::FORM_HEADERS, body: URI::Params.encode({name: "Allowed"}))
       CreateChildSpec::MyModel::AddChildWithDynamicOptionsAction.handle(mock_ctx)
       mock_ctx.response.status_code.should eq(201)
 
@@ -210,7 +212,7 @@ describe "MyModel #add_child_action_template" do
 
     it "supports model actions using the form macro helper" do
       model = CreateChildSpec::MyModel.create(name: "Parent")
-      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/add_child_with_plain_form_class", body: URI::Params.encode({name: "Legacy"}))
+      mock_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: "/a/create_child_spec/my_model/#{model.id.value}/add_child_with_plain_form_class", headers: CreateChildSpec::FORM_HEADERS, body: URI::Params.encode({name: "Legacy"}))
       CreateChildSpec::MyModel::AddChildWithPlainFormClassAction.handle(mock_ctx)
       mock_ctx.response.status_code.should eq(201)
 

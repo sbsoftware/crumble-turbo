@@ -125,8 +125,10 @@ module Crumble::Turbo
       end
 
       getter form : Form do
-        if ctx.handler == self
-          Form.from_www_form(ctx, ctx.request.body.try(&.gets_to_end) || "")
+        # Only the action handling its POST owns the request body; all other
+        # rendering contexts receive an unsubmitted form.
+        if ctx.handler == self && ctx.request.method == "POST"
+          Form.from_request(ctx)
         else
           Form.new(ctx)
         end

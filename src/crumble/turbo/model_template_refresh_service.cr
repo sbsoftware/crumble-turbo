@@ -1,22 +1,28 @@
 require "../../turbo_stream"
 require "../../orma/model_template"
 require "opentelemetry-sdk"
+require "log"
 
 module Crumble
   module Turbo
     module ModelTemplateRefreshService
       alias SessionFilter = ::Crumble::Server::SessionKey | Enumerable(::Crumble::Server::SessionKey)
 
-      record Subscription, ctx : ::Crumble::Server::HandlerContext, channel : Channel(TurboStream(IdentifiableView)), connection_span_context : OpenTelemetry::SpanContext?
+      LOGGER       = Log.for(self)
+      LOG_INTERVAL = 1.minute
+
+      record Subscription, ctx : ::Crumble::Server::HandlerContext, channel : Channel(TurboStream(IdentifiableView)), connection_span_context : OpenTelemetry::SpanContext?, subscribed_at : Time::Instant
 
       @@subscriptions = {} of ::Crumble::Server::SessionKey => Array(Subscription)
       @@model_template_subscriptions = {} of String => Set(::Crumble::Server::SessionKey)
+      @@subscription_logger_started = false
 
       def self.subscribe(ctx : ::Crumble::Server::HandlerContext) : Channel(TurboStream(IdentifiableView))
         id = ctx.session.id
 
         channel = Channel(TurboStream(IdentifiableView)).new
-        (@@subscriptions[id] ||= [] of Subscription) << Subscription.new(ctx, channel, OpenTelemetry.current_span.try(&.context))
+        (@@subscriptions[id] ||= [] of Subscription) << Subscription.new(ctx, channel, OpenTelemetry.current_span.try(&.context), Time.instant)
+        start_subscription_logger
 
         channel
       end
@@ -40,6 +46,20 @@ module Crumble
 
       def self.register(ctx : Crumble::Server::HandlerContext, model_template_id : String)
         (@@model_template_subscriptions[model_template_id] ||= Set(::Crumble::Server::SessionKey).new) << ctx.session.id
+      end
+
+      # :nodoc:
+      def self.log_subscriptions : Nil
+        return unless LOGGER.level == Log::Severity::Debug
+
+        now = Time.instant
+        @@subscriptions.each do |id, subscriptions|
+          model_template_ids = @@model_template_subscriptions.compact_map { |model_template_id, ids| model_template_id if ids.includes?(id) }
+
+          subscriptions.each do |subscription|
+            LOGGER.debug &.emit("Active model template refresh subscription", session_id: id.to_s, connection_uptime_seconds: (now - subscription.subscribed_at).total_seconds, channel_closed: subscription.channel.closed?, model_template_ids: model_template_ids)
+          end
+        end
       end
 
       def self.refresh_model_template_id(model_template_id : String, *, only : SessionFilter? = nil, except : SessionFilter? = nil) : Nil
@@ -191,6 +211,20 @@ module Crumble
         return if model_class_name.empty? || model_id_str.empty? || template_name.empty?
 
         {model_class_name, model_id_str, template_name}
+      end
+
+      private def self.start_subscription_logger : Nil
+        return if @@subscription_logger_started || LOGGER.level != Log::Severity::Debug
+
+        @@subscription_logger_started = true
+
+        # Keep diagnostics outside the SSE fibers so a slow log backend cannot delay refreshes.
+        spawn do
+          loop do
+            sleep LOG_INTERVAL
+            log_subscriptions
+          end
+        end
       end
     end
   end

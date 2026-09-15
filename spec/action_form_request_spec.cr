@@ -134,16 +134,4 @@ module Crumble::Turbo::ActionFormRequestSpec
       html.should contain(%(name="name"))
     end
   end
-
-  private def self.multipart_body(boundary, parts)
-    String.build do |io|
-      parts.each do |name, filename, content_type, contents|
-        io << "--#{boundary}\r\nContent-Disposition: form-data; name=\"#{name}\""
-        io << "; filename=\"#{filename}\"" unless filename.nil?
-        io << "\r\nContent-Type: #{content_type}" unless content_type.nil?
-        io << "\r\n\r\n#{contents}\r\n"
-      end
-      io << "--#{boundary}--\r\n"
-    end
-  end
 end

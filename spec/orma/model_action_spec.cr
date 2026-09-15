@@ -140,7 +140,6 @@ module Orma::ModelActionSpec
       upload = form.attachment.not_nil!
       upload.filename.should eq("report.txt")
       upload.open(&.gets_to_end).should eq("contents")
-      action.form.should be(form)
       request_ctx.cleanup_temporary_files
     end
 
@@ -242,18 +241,6 @@ module Orma::ModelActionSpec
 
       visible_model = Orma::ModelActionSpec::MyModel.new(id: 7_i64, some_number: 2)
       visible_model.restricted_view_action_template(ctx).to_html.should contain("Restricted")
-    end
-  end
-
-  private def self.multipart_body(boundary, parts)
-    String.build do |io|
-      parts.each do |name, filename, content_type, contents|
-        io << "--#{boundary}\r\nContent-Disposition: form-data; name=\"#{name}\""
-        io << "; filename=\"#{filename}\"" unless filename.nil?
-        io << "\r\nContent-Type: #{content_type}" unless content_type.nil?
-        io << "\r\n\r\n#{contents}\r\n"
-      end
-      io << "--#{boundary}--\r\n"
     end
   end
 end

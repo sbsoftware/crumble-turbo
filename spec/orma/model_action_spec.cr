@@ -76,6 +76,22 @@ module Orma::ModelActionSpec
         end
       end
     end
+
+    model_action :upload, nil do
+      form do
+        field title : String
+        field attachment : Crumble::UploadedFile?, type: :file
+      end
+
+      controller do
+      end
+
+      view do
+        template do
+          action_form.to_html { "Upload" }
+        end
+      end
+    end
   end
 
   describe "MyModel#inc_some_number_action_template" do
@@ -100,6 +116,33 @@ module Orma::ModelActionSpec
   end
 
   describe "when handling a request" do
+    it "parses URL-encoded model action forms while retaining the model" do
+      model = Orma::ModelActionSpec::MyModel.new(id: 8_i64)
+      headers = HTTP::Headers{"Content-Type" => "application/x-www-form-urlencoded"}
+      request_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: MyModel::UploadAction.uri_path(model.id), headers: headers, body: "title=Report")
+      action = MyModel::UploadAction.new(request_ctx, model)
+
+      action.form.title.should eq("Report")
+      action.form.model.should be(model)
+    end
+
+    it "parses multipart model action forms and uploaded files while retaining the model" do
+      model = Orma::ModelActionSpec::MyModel.new(id: 9_i64)
+      boundary = "turbo-model-action-boundary"
+      body = multipart_body(boundary, [{"title", nil, nil, "Report"}, {"attachment", "report.txt", "text/plain", "contents"}])
+      headers = HTTP::Headers{"Content-Type" => "multipart/form-data; boundary=#{boundary}"}
+      request_ctx = Crumble::Server::TestRequestContext.new(method: "POST", resource: MyModel::UploadAction.uri_path(model.id), headers: headers, body: body)
+      action = MyModel::UploadAction.new(request_ctx, model)
+
+      form = action.form
+      form.title.should eq("Report")
+      form.model.should be(model)
+      upload = form.attachment.not_nil!
+      upload.filename.should eq("report.txt")
+      upload.open(&.gets_to_end).should eq("contents")
+      request_ctx.cleanup_temporary_files
+    end
+
     it "executes the controller" do
       model = Orma::ModelActionSpec::MyModel.create(some_number: 3)
       model_id = model.id.value

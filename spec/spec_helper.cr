@@ -13,6 +13,18 @@ class String
   end
 end
 
+def multipart_body(boundary, parts)
+  String.build do |io|
+    parts.each do |name, filename, content_type, contents|
+      io << "--#{boundary}\r\nContent-Disposition: form-data; name=\"#{name}\""
+      io << "; filename=\"#{filename}\"" unless filename.nil?
+      io << "\r\nContent-Type: #{content_type}" unless content_type.nil?
+      io << "\r\n\r\n#{contents}\r\n"
+    end
+    io << "--#{boundary}--\r\n"
+  end
+end
+
 class Crumble::Server::Session
   property model_template_refresh_value : String?
 end

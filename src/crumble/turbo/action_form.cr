@@ -6,8 +6,14 @@ module Crumble::Turbo
 
     def initialize(@uri_path, @form, *, @hidden = false); end
 
+    def to_html_attrs(_tag, attrs)
+      if enctype = form.enctype
+        attrs["enctype"] = enctype
+      end
+    end
+
     ToHtml.instance_template do
-      form (Hidden if hidden), action: uri_path, method: "POST" do
+      form self, (Hidden if hidden), action: uri_path, method: "POST" do
         form.to_html
 
         yield

@@ -1,26 +1,28 @@
 require "../../turbo_stream"
 require "../../orma/model_template"
 require "opentelemetry-sdk"
+require "log"
 
 module Crumble
   module Turbo
     module ModelTemplateRefreshService
       alias SessionFilter = ::Crumble::Server::SessionKey | Enumerable(::Crumble::Server::SessionKey)
 
-      record Subscription, ctx : ::Crumble::Server::HandlerContext, channel : Channel(TurboStream(IdentifiableView)), connection_span_context : OpenTelemetry::SpanContext?
+      LOGGER       = Log.for(self)
+      LOG_INTERVAL = 1.minute
 
-      @@subscriptions = {} of ::Crumble::Server::SessionKey => Subscription
+      record Subscription, ctx : ::Crumble::Server::HandlerContext, channel : Channel(TurboStream(IdentifiableView)), connection_span_context : OpenTelemetry::SpanContext?, subscribed_at : Time::Instant
+
+      @@subscriptions = {} of ::Crumble::Server::SessionKey => Array(Subscription)
       @@model_template_subscriptions = {} of String => Set(::Crumble::Server::SessionKey)
+      @@subscription_logger_started = false
 
       def self.subscribe(ctx : ::Crumble::Server::HandlerContext) : Channel(TurboStream(IdentifiableView))
         id = ctx.session.id
 
-        if existing_subscription = @@subscriptions[id]?
-          existing_subscription.channel.close
-        end
-
         channel = Channel(TurboStream(IdentifiableView)).new
-        @@subscriptions[id] = Subscription.new(ctx, channel, OpenTelemetry.current_span.try(&.context))
+        (@@subscriptions[id] ||= [] of Subscription) << Subscription.new(ctx, channel, OpenTelemetry.current_span.try(&.context), Time.instant)
+        start_subscription_logger
 
         channel
       end
@@ -28,14 +30,36 @@ module Crumble
       def self.unsubscribe(ctx : ::Crumble::Server::HandlerContext) : Nil
         id = ctx.session.id
 
-        if subscription = @@subscriptions[id]?
-          subscription.channel.close
+        if subscriptions = @@subscriptions[id]?
+          subscriptions.each { |subscription| subscription.channel.close }
           @@subscriptions.delete(id)
         end
       end
 
+      def self.unsubscribe(ctx : ::Crumble::Server::HandlerContext, channel : Channel(TurboStream(IdentifiableView))) : Nil
+        id = ctx.session.id
+        return unless subscriptions = @@subscriptions[id]?
+
+        subscriptions.reject! { |subscription| subscription.channel == channel }
+        @@subscriptions.delete(id) if subscriptions.empty?
+      end
+
       def self.register(ctx : Crumble::Server::HandlerContext, model_template_id : String)
         (@@model_template_subscriptions[model_template_id] ||= Set(::Crumble::Server::SessionKey).new) << ctx.session.id
+      end
+
+      # :nodoc:
+      def self.log_subscriptions : Nil
+        return unless LOGGER.level == Log::Severity::Debug
+
+        now = Time.instant
+        @@subscriptions.each do |id, subscriptions|
+          model_template_ids = @@model_template_subscriptions.compact_map { |model_template_id, ids| model_template_id if ids.includes?(id) }
+
+          subscriptions.each do |subscription|
+            LOGGER.debug &.emit("Active model template refresh subscription", session_id: id.to_s, connection_uptime_seconds: (now - subscription.subscribed_at).total_seconds, channel_closed: subscription.channel.closed?, model_template_ids: model_template_ids)
+          end
+        end
       end
 
       def self.refresh_model_template_id(model_template_id : String, *, only : SessionFilter? = nil, except : SessionFilter? = nil) : Nil
@@ -140,44 +164,37 @@ module Crumble
         stale_ids.each do |id|
           ids.delete(id)
 
-          if (subscription = @@subscriptions[id]?) && subscription.channel.closed?
+          if (subscriptions = @@subscriptions[id]?) && subscriptions.all?(&.channel.closed?)
             @@subscriptions.delete(id)
           end
         end
       end
 
       private def self.send_model_template_to_subscription(model_template, id : ::Crumble::Server::SessionKey) : Bool
-        return false unless subscription = @@subscriptions[id]?
-        return false if subscription.channel.closed?
+        return false unless subscriptions = @@subscriptions[id]?
+        active_subscriptions = subscriptions.reject(&.channel.closed?)
+        return false if active_subscriptions.empty?
 
-        spawn do
-          trace = trace_for_model_template_send(subscription)
-          trace.in_span("SSE model template transmission") do |span|
-            span.producer!
-            span["crumble.turbo.model_template.id"] = model_template.dom_id.attr_value
-            span["crumble.session.id"] = id.to_s
-            if connection_span_context = subscription.connection_span_context
-              span.add_link(connection_span_context, {"crumble.link.type" => "sse.connection"})
+        # A browser session can have multiple tabs, each with its own SSE channel.
+        active_subscriptions.each do |subscription|
+          spawn do
+            OpenTelemetry.trace_provider.trace.in_span("SSE model template transmission") do |span|
+              span.producer!
+              span["crumble.turbo.model_template.id"] = model_template.dom_id.attr_value
+              span["crumble.session.id"] = id.to_s
+              if connection_span_context = subscription.connection_span_context
+                span.add_link(connection_span_context, {"crumble.link.type" => "sse.connection"})
+              end
+
+              subscription.ctx.session.reload
+              subscription.channel.send(model_template.renderer(subscription.ctx).turbo_stream)
             end
-
-            subscription.ctx.session.reload
-            subscription.channel.send(model_template.renderer(subscription.ctx).turbo_stream)
+          rescue e : Channel::ClosedError
+            # discard
           end
-        rescue e : Channel::ClosedError
-          # discard
         end
 
         true
-      end
-
-      private def self.trace_for_model_template_send(subscription) : OpenTelemetry::Trace
-        trace = OpenTelemetry.trace_provider.trace
-        if connection_span_context = subscription.connection_span_context
-          trace.trace_id = connection_span_context.trace_id
-          trace.span_context.trace_id = connection_span_context.trace_id
-        end
-
-        trace
       end
 
       private def self.parse_model_template_id(model_template_id : String) : {String, String, String}?
@@ -194,6 +211,20 @@ module Crumble
         return if model_class_name.empty? || model_id_str.empty? || template_name.empty?
 
         {model_class_name, model_id_str, template_name}
+      end
+
+      private def self.start_subscription_logger : Nil
+        return if @@subscription_logger_started || LOGGER.level != Log::Severity::Debug
+
+        @@subscription_logger_started = true
+
+        # Keep diagnostics outside the SSE fibers so a slow log backend cannot delay refreshes.
+        spawn do
+          loop do
+            sleep LOG_INTERVAL
+            log_subscriptions
+          end
+        end
       end
     end
   end

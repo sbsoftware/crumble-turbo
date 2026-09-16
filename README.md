@@ -26,7 +26,13 @@ Require the shard from your app:
 require "crumble-turbo"
 ```
 
-The shard appends the Turbo script tag, action form styles, and the model template refresh controller to Crumble's default layout.
+The shard appends the Turbo script tag, action form styles, and the model template refresh controller to Crumble's default layout. Turbo is served by the application as a fingerprinted asset, so pages do not depend on a third-party request for the runtime.
+
+### Vendored Turbo runtime
+
+The shard vendors the `turbo.es2017-umd.js` browser build from `@hotwired/turbo` 8.0.4. The upstream MIT license is included at `vendor/turbo/8.0.4/MIT-LICENSE`, and its notice is preserved in the served JavaScript.
+
+To upgrade Turbo, replace both vendored files from the same pinned upstream release, preserve the complete license notice at the start of the JavaScript file, update the version in the registered asset path and this documentation, and run the full spec suite.
 
 ## Static Actions
 

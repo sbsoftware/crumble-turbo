@@ -101,7 +101,7 @@ class Orma::Record
   macro create_child_action(name, child_class, parent_id_attr, tpl, &blk)
     model_action({{name}}, {{tpl}}, Orma::CreateChildAction) do
       def self.child_class : ::Orma::Record.class
-        {{child_class.resolve}}
+        {{child_class}}
       end
 
       def parent_params

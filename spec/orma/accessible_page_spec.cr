@@ -72,7 +72,7 @@ describe "accessible pages" do
   it "creates the access record, redirects to the target resource, and refreshes the model template when the submitted token matches" do
     group = AccessiblePageSpecGroup.create(name: "Sailing Club", access_token: "SailingClubToken1")
     res = String.build do |io|
-      ctx = Crumble::Server::TestRequestContext.new(io, method: "POST", resource: AccessiblePageSpecGroup::AcceptAccessAction.uri_path(group.id.value), body: "access_token=#{group.access_token.value}")
+      ctx = Crumble::Server::TestRequestContext.new(io, method: "POST", resource: AccessiblePageSpecGroup::AcceptAccessAction.uri_path(group.id.value), headers: HTTP::Headers{"Content-Type" => "application/x-www-form-urlencoded"}, body: "access_token=#{group.access_token.value}")
       AccessiblePageSpecGroup::AcceptAccessAction.handle(ctx).should eq(true)
       ctx.response.status_code.should eq(303)
       ctx.response.headers["Location"].should eq("/groups/#{group.id.value}")

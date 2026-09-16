@@ -33,12 +33,13 @@ module Crumble
             io << "\n\n"
             io.flush
           rescue e : IO::Error
-            ModelTemplateRefreshService.unsubscribe(ctx)
+            ModelTemplateRefreshService.unsubscribe(ctx, channel)
 
             break
           end
         rescue Channel::ClosedError
         ensure
+          ModelTemplateRefreshService.unsubscribe(ctx, channel)
           channel.close
           io.close
         end

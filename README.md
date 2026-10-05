@@ -71,7 +71,7 @@ class Invoice < Orma::Record
 end
 ```
 
-Render a template with `invoice.summary.renderer(ctx)`. You can embed it directly in a page layout with `to_html`. Calling `invoice.summary.refresh!` pushes the refreshed template to subscribed sessions through the built-in model template refresh resource.
+Render a template with `invoice.summary(ctx)`. You can embed it directly in a page layout with `to_html`. Calling `invoice.refresh_summary!` pushes the refreshed template to subscribed sessions through the built-in model template refresh resource, without requiring a request context.
 
 ## Model Actions
 

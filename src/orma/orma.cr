@@ -35,12 +35,24 @@ class Orma::Record
               {% end %}
 
               {% for tpl in tpl_expr %}
-                model.{{tpl.id}},
+                model.{{tpl.id}}(ctx),
               {% end %}
             {% else %}
-              model.{{tpl_expr.id}},
+              model.{{tpl_expr.id}}(ctx),
             {% end %}
           }
+        {% end %}
+      end
+
+      def refresh_model_templates!
+        {% unless tpl_expr.is_a?(NilLiteral) %}
+          {% if tpl_expr.is_a?(ArrayLiteral) || tpl_expr.is_a?(TupleLiteral) %}
+            {% for tpl in tpl_expr %}
+              model.refresh_{{tpl.id}}!(except: ctx.session.id)
+            {% end %}
+          {% else %}
+            model.refresh_{{tpl_expr.id}}!(except: ctx.session.id)
+          {% end %}
         {% end %}
       end
 
@@ -143,7 +155,7 @@ class Orma::Record
       end
 
       def child_view(child)
-        child.{{child_view.id}}.renderer(ctx)
+        child.{{child_view.id}}(ctx)
       end
 
       {% if blk %}

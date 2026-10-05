@@ -178,7 +178,7 @@ module Orma::ModelActionSpec
     it "does not broadcast a model template refresh back to the submitting session" do
       model = Orma::ModelActionSpec::MyModel.create(some_number: 3)
       model_id = model.id.value
-      model_template_id = model.some_number_view.dom_id.attr_value
+      model_template_id = model.some_number_view(test_handler_context).dom_id.attr_value
       session_store = Crumble::Server::MemorySessionStore.new
       submitting_session = Crumble::Server::Session.new
       other_session = Crumble::Server::Session.new

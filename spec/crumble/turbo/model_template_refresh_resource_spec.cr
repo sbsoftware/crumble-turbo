@@ -2,7 +2,32 @@ require "../../spec_helper"
 require "json"
 require "log/spec"
 
+module Crumble::Turbo::ModelTemplateRefreshService
+  def self.registered_model_template_count : Int32
+    @@subscriptions_by_model_template.size
+  end
+end
+
 module Crumble::Turbo::ModelTemplateRefreshResourceSpec
+  SUBSCRIPTION_ID = "spec-subscription"
+
+  def self.subscription_resource(subscription_id = SUBSCRIPTION_ID)
+    "#{ModelTemplateRefreshResource.uri_path}?subscription_id=#{subscription_id}"
+  end
+
+  def self.session_headers(session : ::Crumble::Server::Session) : HTTP::Headers
+    headers = HTTP::Headers.new
+    cookies = HTTP::Cookies.new
+    cookies[::Crumble::Server::RequestContext::SESSION_COOKIE_NAME] = session.id.to_s
+    cookies.add_request_headers(headers)
+    headers
+  end
+
+  def self.handler_context(headers : HTTP::Headers, session_store : ::Crumble::Server::SessionStore)
+    request_ctx = ::Crumble::Server::TestRequestContext.new(headers: headers, session_store: session_store)
+    ::Crumble::Server::HandlerContext.new(request_ctx, TestViewHandler.new(request_ctx))
+  end
+
   class MyModel < TestRecord
     id_column id : Int64
     column name : String
@@ -66,19 +91,18 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
       session_store = ::Crumble::Server::MemorySessionStore.new
       session = ::Crumble::Server::Session.new
       session_store.set(session)
-      headers = HTTP::Headers.new
-      cookies = HTTP::Cookies.new
-      cookies[::Crumble::Server::RequestContext::SESSION_COOKIE_NAME] = session.id.to_s
-      cookies.add_request_headers(headers)
-      first_request_ctx = ::Crumble::Server::TestRequestContext.new(headers: headers, session_store: session_store)
-      second_request_ctx = ::Crumble::Server::TestRequestContext.new(headers: headers, session_store: session_store)
-      first_ctx = ::Crumble::Server::HandlerContext.new(first_request_ctx, TestViewHandler.new(first_request_ctx))
-      second_ctx = ::Crumble::Server::HandlerContext.new(second_request_ctx, TestViewHandler.new(second_request_ctx))
-      first_channel = ModelTemplateRefreshService.subscribe(first_ctx)
-      second_channel = ModelTemplateRefreshService.subscribe(second_ctx)
+      headers = session_headers(session)
+      first_ctx = handler_context(headers, session_store)
+      second_ctx = handler_context(headers, session_store)
+      first_channel = ModelTemplateRefreshService.subscribe(first_ctx, "first-tab")
+      second_channel = ModelTemplateRefreshService.subscribe(second_ctx, "second-tab")
 
       begin
-        ModelTemplateRefreshService.register(first_ctx, model.the_view(test_handler_context).dom_id.attr_value)
+        ModelTemplateRefreshService.register(first_ctx, "first-tab", [model.the_view(test_handler_context).dom_id.attr_value])
+        ModelTemplateRefreshService.register(second_ctx, "second-tab", [model.the_view(test_handler_context).dom_id.attr_value])
+        3.times { Fiber.yield }
+        first_channel.receive
+        second_channel.receive
 
         previous_log_level = ModelTemplateRefreshService::LOGGER.level
         begin
@@ -90,7 +114,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
             ModelTemplateRefreshService::LOGGER.level = Log::Severity::Debug
             ModelTemplateRefreshService.log_subscriptions
             logs.check("a subscription log with session diagnostics") do |entry|
-              entry.severity.debug? && entry.message == "Active model template refresh subscription" && entry.data[:session_id].as_s == session.id.to_s && entry.data[:connection_uptime_seconds].as_f64 >= 0 && entry.data[:model_template_ids].as_a.any?(&.as_s.==(model.the_view(test_handler_context).dom_id.attr_value))
+              entry.severity.debug? && entry.message == "Active model template refresh subscription" && entry.data[:session_id].as_s == session.id.to_s && entry.data[:subscription_id].as_s.in?({"first-tab", "second-tab"}) && entry.data[:connection_uptime_seconds].as_f64 >= 0 && entry.data[:model_template_ids].as_a.any?(&.as_s.==(model.the_view(test_handler_context).dom_id.attr_value))
             end
           end
         ensure
@@ -114,6 +138,120 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
       end
     end
 
+    it "keeps template registrations isolated per tab and discards empty index entries" do
+      first_model = MyModel.create(name: "Yoda")
+      second_model = MyModel.create(name: "Leia")
+      first_model_template_id = first_model.the_view(test_handler_context).dom_id.attr_value
+      second_model_template_id = second_model.the_view(test_handler_context).dom_id.attr_value
+      initial_template_count = ModelTemplateRefreshService.registered_model_template_count
+      session_store = ::Crumble::Server::MemorySessionStore.new
+      session = ::Crumble::Server::Session.new
+      session_store.set(session)
+      headers = session_headers(session)
+      first_ctx = handler_context(headers, session_store)
+      second_ctx = handler_context(headers, session_store)
+      first_channel = ModelTemplateRefreshService.subscribe(first_ctx, "first-distinct-tab")
+      second_channel = ModelTemplateRefreshService.subscribe(second_ctx, "second-distinct-tab")
+
+      begin
+        ModelTemplateRefreshService.register(first_ctx, "first-distinct-tab", [first_model_template_id])
+        ModelTemplateRefreshService.register(second_ctx, "second-distinct-tab", [second_model_template_id])
+        3.times { Fiber.yield }
+        first_channel.receive
+        second_channel.receive
+        ModelTemplateRefreshService.registered_model_template_count.should eq(initial_template_count + 2)
+
+        first_model.refresh_the_view!
+        3.times { Fiber.yield }
+        first_channel.receive.should_not be_nil
+
+        second_refresh = nil
+        select
+        when second_refresh = second_channel.receive
+        when timeout(10.milliseconds)
+        end
+        second_refresh.should be_nil
+
+        # Registration payloads are complete snapshots, so an empty payload must
+        # remove the connection and the now-unused template key from the index.
+        ModelTemplateRefreshService.register(first_ctx, "first-distinct-tab", [] of String)
+        ModelTemplateRefreshService.registered_model_template_count.should eq(initial_template_count + 1)
+
+        first_model.refresh_the_view!
+        3.times { Fiber.yield }
+        first_refresh = nil
+        select
+        when first_refresh = first_channel.receive
+        when timeout(10.milliseconds)
+        end
+        first_refresh.should be_nil
+
+        second_model.refresh_the_view!
+        3.times { Fiber.yield }
+        second_channel.receive.should_not be_nil
+      ensure
+        ModelTemplateRefreshService.unsubscribe(first_ctx, first_channel)
+        first_channel.close
+        ModelTemplateRefreshService.unsubscribe(second_ctx, second_channel)
+        second_channel.close
+      end
+
+      ModelTemplateRefreshService.registered_model_template_count.should eq(initial_template_count)
+    end
+
+    it "replaces a reconnecting tab that reuses its subscription token" do
+      model = MyModel.create(name: "Yoda")
+      model_template_id = model.the_view(test_handler_context).dom_id.attr_value
+      request_ctx = ::Crumble::Server::TestRequestContext.new
+      ctx = ::Crumble::Server::HandlerContext.new(request_ctx, TestViewHandler.new(request_ctx))
+      old_channel = ModelTemplateRefreshService.subscribe(ctx, "reconnecting-tab")
+      ModelTemplateRefreshService.register(ctx, "reconnecting-tab", [model_template_id])
+
+      new_channel = ModelTemplateRefreshService.subscribe(ctx, "reconnecting-tab")
+      begin
+        ModelTemplateRefreshService.register(ctx, "reconnecting-tab", [model_template_id])
+        3.times { Fiber.yield }
+        new_channel.receive
+
+        model.refresh_the_view!
+        3.times { Fiber.yield }
+
+        old_channel.closed?.should be_true
+        new_channel.receive.should_not be_nil
+      ensure
+        ModelTemplateRefreshService.unsubscribe(ctx, new_channel)
+        new_channel.close
+      end
+    end
+
+    it "rejects registration without a matching connection token" do
+      missing_token_ctx = ::Crumble::Server::TestRequestContext.new(resource: ModelTemplateRefreshResource.uri_path, method: "GET")
+      ModelTemplateRefreshResource.handle(missing_token_ctx)
+      missing_token_ctx.response.status_code.should eq(400)
+
+      unknown_token_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource("unknown"), method: "POST", body: "[]")
+      ModelTemplateRefreshResource.handle(unknown_token_ctx)
+      unknown_token_ctx.response.status_code.should eq(400)
+
+      session_store = ::Crumble::Server::MemorySessionStore.new
+      owner_session = ::Crumble::Server::Session.new
+      attacker_session = ::Crumble::Server::Session.new
+      session_store.set(owner_session)
+      session_store.set(attacker_session)
+      owner_ctx = handler_context(session_headers(owner_session), session_store)
+      owner_channel = ModelTemplateRefreshService.subscribe(owner_ctx, "owner-token")
+
+      begin
+        attacker_headers = session_headers(attacker_session)
+        attacker_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource("owner-token"), method: "POST", body: "[]", headers: attacker_headers, session_store: session_store)
+        ModelTemplateRefreshResource.handle(attacker_ctx)
+        attacker_ctx.response.status_code.should eq(400)
+      ensure
+        ModelTemplateRefreshService.unsubscribe(owner_ctx, owner_channel)
+        owner_channel.close
+      end
+    end
+
     it "should initially refresh registered model templates" do
       model = MyModel.create(name: "Yoda")
 
@@ -127,7 +265,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
         cookies[::Crumble::Server::RequestContext::SESSION_COOKIE_NAME] = session.id.to_s
         cookies.add_request_headers(headers)
 
-        ctx = ::Crumble::Server::TestRequestContext.new(resource: ModelTemplateRefreshResource.uri_path, method: "GET", response_io: res_io, headers: headers, session_store: session_store)
+        ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "GET", response_io: res_io, headers: headers, session_store: session_store)
         ModelTemplateRefreshResource.handle(ctx)
 
         # Simulate HTTP::Server::RequestProcessor
@@ -137,7 +275,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
           end
         end
 
-        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: ModelTemplateRefreshResource.uri_path, method: "POST", body: "[\"#{model.the_view(test_handler_context).dom_id.attr_value}\"]", headers: headers, session_store: session_store)
+        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "POST", body: "[\"#{model.the_view(test_handler_context).dom_id.attr_value}\"]", headers: headers, session_store: session_store)
         ModelTemplateRefreshResource.handle(post_ctx)
 
         3.times { Fiber.yield }
@@ -172,7 +310,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
         cookies[::Crumble::Server::RequestContext::SESSION_COOKIE_NAME] = session.id.to_s
         cookies.add_request_headers(headers)
 
-        ctx = ::Crumble::Server::TestRequestContext.new(resource: ModelTemplateRefreshResource.uri_path, method: "GET", response_io: res_io, headers: headers, session_store: session_store)
+        ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "GET", response_io: res_io, headers: headers, session_store: session_store)
         ModelTemplateRefreshResource.handle(ctx)
 
         # Simulate HTTP::Server::RequestProcessor
@@ -182,7 +320,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
           end
         end
 
-        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: ModelTemplateRefreshResource.uri_path, method: "POST", body: "[\"#{model.the_view(test_handler_context).dom_id.attr_value}\"]", headers: headers, session_store: session_store)
+        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "POST", body: "[\"#{model.the_view(test_handler_context).dom_id.attr_value}\"]", headers: headers, session_store: session_store)
         ModelTemplateRefreshResource.handle(post_ctx)
 
         model.refresh_the_view!
@@ -220,7 +358,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
         cookies[::Crumble::Server::RequestContext::SESSION_COOKIE_NAME] = session.id.to_s
         cookies.add_request_headers(headers)
 
-        ctx = ::Crumble::Server::TestRequestContext.new(resource: ModelTemplateRefreshResource.uri_path, method: "GET", response_io: res_io, headers: headers, session_store: session_store)
+        ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "GET", response_io: res_io, headers: headers, session_store: session_store)
         ModelTemplateRefreshResource.handle(ctx)
 
         spawn do
@@ -229,7 +367,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
           end
         end
 
-        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: ModelTemplateRefreshResource.uri_path, method: "POST", body: "[\"#{model.the_view(test_handler_context).dom_id.attr_value}\"]", headers: headers, session_store: session_store)
+        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "POST", body: "[\"#{model.the_view(test_handler_context).dom_id.attr_value}\"]", headers: headers, session_store: session_store)
         ModelTemplateRefreshResource.handle(post_ctx)
 
         updated_session = ::Crumble::Server::Session.new(session.id)
@@ -269,7 +407,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
         cookies[::Crumble::Server::RequestContext::SESSION_COOKIE_NAME] = session.id.to_s
         cookies.add_request_headers(headers)
 
-        ctx = ::Crumble::Server::TestRequestContext.new(resource: ModelTemplateRefreshResource.uri_path, method: "GET", response_io: res_io, headers: headers, session_store: session_store)
+        ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "GET", response_io: res_io, headers: headers, session_store: session_store)
         ModelTemplateRefreshResource.handle(ctx)
 
         spawn do
@@ -278,7 +416,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
           end
         end
 
-        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: ModelTemplateRefreshResource.uri_path, method: "POST", body: "[\"#{model.the_view(test_handler_context).dom_id.attr_value}\"]", headers: headers, session_store: session_store)
+        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "POST", body: "[\"#{model.the_view(test_handler_context).dom_id.attr_value}\"]", headers: headers, session_store: session_store)
         ModelTemplateRefreshResource.handle(post_ctx)
 
         3.times { Fiber.yield }
@@ -307,7 +445,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
         cookies[::Crumble::Server::RequestContext::SESSION_COOKIE_NAME] = session.id.to_s
         cookies.add_request_headers(headers)
 
-        ctx = ::Crumble::Server::TestRequestContext.new(resource: ModelTemplateRefreshResource.uri_path, method: "GET", response_io: res_io, headers: headers, session_store: session_store)
+        ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "GET", response_io: res_io, headers: headers, session_store: session_store)
         ModelTemplateRefreshResource.handle(ctx)
 
         spawn do
@@ -316,7 +454,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
           end
         end
 
-        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: ModelTemplateRefreshResource.uri_path, method: "POST", body: "[\"#{model.the_view(test_handler_context).dom_id.attr_value}\"]", headers: headers, session_store: session_store)
+        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "POST", body: "[\"#{model.the_view(test_handler_context).dom_id.attr_value}\"]", headers: headers, session_store: session_store)
         ModelTemplateRefreshResource.handle(post_ctx)
 
         3.times { Fiber.yield }
@@ -350,7 +488,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
         cookies = HTTP::Cookies.new
         cookies[::Crumble::Server::RequestContext::SESSION_COOKIE_NAME] = session.id.to_s
         cookies.add_request_headers(headers)
-        ctx = ::Crumble::Server::TestRequestContext.new(resource: ModelTemplateRefreshResource.uri_path, method: "GET", response_io: IO::Memory.new, headers: headers, session_store: session_store)
+        ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "GET", response_io: IO::Memory.new, headers: headers, session_store: session_store)
 
         OpenTelemetry.tracer.in_span("GET #{ModelTemplateRefreshResource.uri_path}") do |span|
           span.server!
@@ -363,7 +501,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
           end
         end
 
-        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: ModelTemplateRefreshResource.uri_path, method: "POST", body: "[\"#{model.the_view(test_handler_context).dom_id.attr_value}\"]", headers: headers, session_store: session_store)
+        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "POST", body: "[\"#{model.the_view(test_handler_context).dom_id.attr_value}\"]", headers: headers, session_store: session_store)
         ModelTemplateRefreshResource.handle(post_ctx)
         3.times { Fiber.yield }
 

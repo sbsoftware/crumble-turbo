@@ -64,10 +64,10 @@ class Orma::Record
       __model_template_{{method_name.id}}.render(ctx)
     end
 
-    def refresh_{{method_name.id}}!(*, except : ::Crumble::Server::SessionKey | Enumerable(::Crumble::Server::SessionKey)? = nil)
+    def refresh_{{method_name.id}}!
       raise ArgumentError.new("Cannot render model template for unpersisted record") unless id = self.id
 
-      ::Crumble::Turbo::ModelTemplateRefreshService.refresh_model_template({{@type.name.stringify}}, id.value, {{method_name.id.stringify}}, except: except)
+      ::Crumble::Turbo::ModelTemplateRefreshService.refresh_model_template({{@type.name.stringify}}, id.value, {{method_name.id.stringify}})
     end
   end
 end

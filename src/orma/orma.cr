@@ -48,10 +48,10 @@ class Orma::Record
         {% unless tpl_expr.is_a?(NilLiteral) %}
           {% if tpl_expr.is_a?(ArrayLiteral) || tpl_expr.is_a?(TupleLiteral) %}
             {% for tpl in tpl_expr %}
-              model.refresh_{{tpl.id}}!(except: ctx.session.id)
+              model.refresh_{{tpl.id}}!
             {% end %}
           {% else %}
-            model.refresh_{{tpl_expr.id}}!(except: ctx.session.id)
+            model.refresh_{{tpl_expr.id}}!
           {% end %}
         {% end %}
       end

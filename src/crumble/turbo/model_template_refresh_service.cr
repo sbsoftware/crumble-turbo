@@ -148,7 +148,7 @@ module Crumble
               case template_name
                 {% for method in klass.methods.select { |m| m.annotation(::Orma::Record::ModelTemplateMethod) } %}
                 when {{method.name.stringify}}
-                  notify(%model.{{method.name}}, subscription_key)
+                  notify(%model.__model_template_{{method.name}}, subscription_key)
                 {% end %}
               end
             {% end %}
@@ -194,7 +194,7 @@ module Crumble
             end
 
             subscription.ctx.session.reload
-            subscription.channel.send(model_template.renderer(subscription.ctx).turbo_stream)
+            subscription.channel.send(model_template.render(subscription.ctx).turbo_stream)
           end
         rescue e : Channel::ClosedError
           # The browser may already have replaced this token with a new channel.

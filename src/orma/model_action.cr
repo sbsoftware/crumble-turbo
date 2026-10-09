@@ -18,6 +18,7 @@ module Orma
     # Model templates that should be streamed to the requester and refreshed for
     # other subscribers after the action controller runs.
     abstract def refreshed_model_templates
+    abstract def refresh_model_templates!
 
     class Policy < ::Crumble::Turbo::Action::Policy
       def model
@@ -110,10 +111,8 @@ module Orma
       model_action_controller
 
       if templates = refreshed_model_templates
-        templates.each do |tpl|
-          tpl.renderer(ctx).turbo_stream.to_html(ctx.response)
-          tpl.refresh!
-        end
+        templates.each { |tpl| tpl.turbo_stream.to_html(ctx.response) }
+        refresh_model_templates!
       end
     end
 

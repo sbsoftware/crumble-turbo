@@ -178,7 +178,7 @@ module Orma::ModelActionSpec
     it "broadcasts a model template refresh to all registered connections" do
       model = Orma::ModelActionSpec::MyModel.create(some_number: 3)
       model_id = model.id.value
-      model_template_id = model.some_number_view.dom_id.attr_value
+      model_template_id = model.some_number_view(test_handler_context).dom_id.attr_value
       session_store = Crumble::Server::MemorySessionStore.new
       submitting_session = Crumble::Server::Session.new
       other_session = Crumble::Server::Session.new

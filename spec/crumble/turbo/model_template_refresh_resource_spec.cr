@@ -98,8 +98,8 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
       second_channel = ModelTemplateRefreshService.subscribe(second_ctx, "second-tab")
 
       begin
-        ModelTemplateRefreshService.register(first_ctx, "first-tab", [model.the_view.dom_id.attr_value])
-        ModelTemplateRefreshService.register(second_ctx, "second-tab", [model.the_view.dom_id.attr_value])
+        ModelTemplateRefreshService.register(first_ctx, "first-tab", [model.the_view(test_handler_context).dom_id.attr_value])
+        ModelTemplateRefreshService.register(second_ctx, "second-tab", [model.the_view(test_handler_context).dom_id.attr_value])
         3.times { Fiber.yield }
         first_channel.receive
         second_channel.receive
@@ -114,14 +114,14 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
             ModelTemplateRefreshService::LOGGER.level = Log::Severity::Debug
             ModelTemplateRefreshService.log_subscriptions
             logs.check("a subscription log with session diagnostics") do |entry|
-              entry.severity.debug? && entry.message == "Active model template refresh subscription" && entry.data[:session_id].as_s == session.id.to_s && entry.data[:subscription_id].as_s.in?({"first-tab", "second-tab"}) && entry.data[:connection_uptime_seconds].as_f64 >= 0 && entry.data[:model_template_ids].as_a.any?(&.as_s.==(model.the_view.dom_id.attr_value))
+              entry.severity.debug? && entry.message == "Active model template refresh subscription" && entry.data[:session_id].as_s == session.id.to_s && entry.data[:subscription_id].as_s.in?({"first-tab", "second-tab"}) && entry.data[:connection_uptime_seconds].as_f64 >= 0 && entry.data[:model_template_ids].as_a.any?(&.as_s.==(model.the_view(test_handler_context).dom_id.attr_value))
             end
           end
         ensure
           ModelTemplateRefreshService::LOGGER.level = previous_log_level
         end
 
-        model.the_view.refresh!
+        model.refresh_the_view!
         3.times { Fiber.yield }
 
         first_channel.receive.should_not be_nil
@@ -129,7 +129,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
 
         ModelTemplateRefreshService.unsubscribe(first_ctx, first_channel)
         first_channel.close
-        model.the_view.refresh!
+        model.refresh_the_view!
         3.times { Fiber.yield }
 
         second_channel.receive.should_not be_nil
@@ -141,8 +141,8 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
     it "keeps template registrations isolated per tab and discards empty index entries" do
       first_model = MyModel.create(name: "Yoda")
       second_model = MyModel.create(name: "Leia")
-      first_model_template_id = first_model.the_view.dom_id.attr_value
-      second_model_template_id = second_model.the_view.dom_id.attr_value
+      first_model_template_id = first_model.the_view(test_handler_context).dom_id.attr_value
+      second_model_template_id = second_model.the_view(test_handler_context).dom_id.attr_value
       initial_template_count = ModelTemplateRefreshService.registered_model_template_count
       session_store = ::Crumble::Server::MemorySessionStore.new
       session = ::Crumble::Server::Session.new
@@ -161,7 +161,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
         second_channel.receive
         ModelTemplateRefreshService.registered_model_template_count.should eq(initial_template_count + 2)
 
-        first_model.the_view.refresh!
+        first_model.refresh_the_view!
         3.times { Fiber.yield }
         first_channel.receive.should_not be_nil
 
@@ -177,7 +177,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
         ModelTemplateRefreshService.register(first_ctx, "first-distinct-tab", [] of String)
         ModelTemplateRefreshService.registered_model_template_count.should eq(initial_template_count + 1)
 
-        first_model.the_view.refresh!
+        first_model.refresh_the_view!
         3.times { Fiber.yield }
         first_refresh = nil
         select
@@ -186,7 +186,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
         end
         first_refresh.should be_nil
 
-        second_model.the_view.refresh!
+        second_model.refresh_the_view!
         3.times { Fiber.yield }
         second_channel.receive.should_not be_nil
       ensure
@@ -201,7 +201,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
 
     it "replaces a reconnecting tab that reuses its subscription token" do
       model = MyModel.create(name: "Yoda")
-      model_template_id = model.the_view.dom_id.attr_value
+      model_template_id = model.the_view(test_handler_context).dom_id.attr_value
       request_ctx = ::Crumble::Server::TestRequestContext.new
       ctx = ::Crumble::Server::HandlerContext.new(request_ctx, TestViewHandler.new(request_ctx))
       old_channel = ModelTemplateRefreshService.subscribe(ctx, "reconnecting-tab")
@@ -213,7 +213,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
         3.times { Fiber.yield }
         new_channel.receive
 
-        model.the_view.refresh!
+        model.refresh_the_view!
         3.times { Fiber.yield }
 
         old_channel.closed?.should be_true
@@ -275,7 +275,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
           end
         end
 
-        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "POST", body: "[\"#{model.the_view.dom_id.attr_value}\"]", headers: headers, session_store: session_store)
+        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "POST", body: "[\"#{model.the_view(test_handler_context).dom_id.attr_value}\"]", headers: headers, session_store: session_store)
         ModelTemplateRefreshResource.handle(post_ctx)
 
         3.times { Fiber.yield }
@@ -320,10 +320,10 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
           end
         end
 
-        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "POST", body: "[\"#{model.the_view.dom_id.attr_value}\"]", headers: headers, session_store: session_store)
+        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "POST", body: "[\"#{model.the_view(test_handler_context).dom_id.attr_value}\"]", headers: headers, session_store: session_store)
         ModelTemplateRefreshResource.handle(post_ctx)
 
-        model.the_view.refresh!
+        model.refresh_the_view!
 
         Fiber.yield
       end
@@ -367,14 +367,14 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
           end
         end
 
-        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "POST", body: "[\"#{model.the_view.dom_id.attr_value}\"]", headers: headers, session_store: session_store)
+        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "POST", body: "[\"#{model.the_view(test_handler_context).dom_id.attr_value}\"]", headers: headers, session_store: session_store)
         ModelTemplateRefreshResource.handle(post_ctx)
 
         updated_session = ::Crumble::Server::Session.new(session.id)
         updated_session.update!(model_template_refresh_value: "updated")
         session_store.set(updated_session)
 
-        model.the_view.refresh!
+        model.refresh_the_view!
 
         3.times { Fiber.yield }
       end
@@ -416,7 +416,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
           end
         end
 
-        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "POST", body: "[\"#{model.the_view.dom_id.attr_value}\"]", headers: headers, session_store: session_store)
+        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "POST", body: "[\"#{model.the_view(test_handler_context).dom_id.attr_value}\"]", headers: headers, session_store: session_store)
         ModelTemplateRefreshResource.handle(post_ctx)
 
         3.times { Fiber.yield }
@@ -454,7 +454,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
           end
         end
 
-        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "POST", body: "[\"#{model.the_view.dom_id.attr_value}\"]", headers: headers, session_store: session_store)
+        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "POST", body: "[\"#{model.the_view(test_handler_context).dom_id.attr_value}\"]", headers: headers, session_store: session_store)
         ModelTemplateRefreshResource.handle(post_ctx)
 
         3.times { Fiber.yield }
@@ -501,7 +501,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
           end
         end
 
-        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "POST", body: "[\"#{model.the_view.dom_id.attr_value}\"]", headers: headers, session_store: session_store)
+        post_ctx = ::Crumble::Server::TestRequestContext.new(resource: subscription_resource, method: "POST", body: "[\"#{model.the_view(test_handler_context).dom_id.attr_value}\"]", headers: headers, session_store: session_store)
         ModelTemplateRefreshResource.handle(post_ctx)
         3.times { Fiber.yield }
 
@@ -511,7 +511,7 @@ module Crumble::Turbo::ModelTemplateRefreshResourceSpec
 
         template_span["traceId"].as_s.should_not eq(connection_span["traceId"].as_s)
         template_span["parentSpanId"].raw.should be_nil
-        template_span["attributes"]["crumble.turbo.model_template.id"].as_s.should eq(model.the_view.dom_id.attr_value)
+        template_span["attributes"]["crumble.turbo.model_template.id"].as_s.should eq(model.the_view(test_handler_context).dom_id.attr_value)
         template_span["links"].as_a.size.should eq(1)
         template_span["links"][0]["traceId"].as_s.should eq(connection_span["traceId"].as_s)
         template_span["links"][0]["spanId"].as_s.should eq(connection_span["spanId"].as_s)

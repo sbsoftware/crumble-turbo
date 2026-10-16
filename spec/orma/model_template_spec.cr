@@ -34,7 +34,7 @@ module Orma::ModelTemplateSpec
       <div data-model-template-id="Orma::ModelTemplateSpec::Model#65-default_model_template" data-crumble--turbo--model-template-refresh-target="modelTemplate"><strong>Pavel</strong></div>
       HTML
 
-      mdl.default_model_template.renderer(test_handler_context).to_html.should eq(expected_html)
+      mdl.default_model_template(test_handler_context).to_html.should eq(expected_html)
     end
 
     it "can provide additional wrapper element attributes" do
@@ -44,7 +44,7 @@ module Orma::ModelTemplateSpec
         <i>50</i>
       </div>
       HTML
-      mdl.model_tpl_with_class.renderer(test_handler_context).to_html.should eq(expected_html)
+      mdl.model_tpl_with_class(test_handler_context).to_html.should eq(expected_html)
     end
   end
 
@@ -57,7 +57,7 @@ module Orma::ModelTemplateSpec
       <turbo-stream action="replace" targets="[data-model-template-id='Orma::ModelTemplateSpec::Model#66-default_model_template']"><template><div data-model-template-id="Orma::ModelTemplateSpec::Model#66-default_model_template" data-crumble--turbo--model-template-refresh-target="modelTemplate"><strong>Bronko</strong></div></template></turbo-stream>
       HTML
 
-      mdl.default_model_template.renderer(test_handler_context).turbo_stream.to_html.should eq(expected_html)
+      mdl.default_model_template(test_handler_context).turbo_stream.to_html.should eq(expected_html)
     end
 
     it "can be used within a layout" do
@@ -73,7 +73,7 @@ module Orma::ModelTemplateSpec
       HTML
 
       Layout.to_html do |io, _il|
-        mdl.default_model_template.renderer(test_handler_context).to_html(io, _il)
+        mdl.default_model_template(test_handler_context).to_html(io, _il)
       end.should eq(expected_html)
     end
   end

@@ -175,10 +175,10 @@ module Orma::ModelActionSpec
       res.should contain("data-model-action-template-id")
     end
 
-    it "does not broadcast a model template refresh back to the submitting session" do
+    it "broadcasts a model template refresh to all registered connections" do
       model = Orma::ModelActionSpec::MyModel.create(some_number: 3)
       model_id = model.id.value
-      model_template_id = model.some_number_view.dom_id.attr_value
+      model_template_id = model.some_number_view(test_handler_context).dom_id.attr_value
       session_store = Crumble::Server::MemorySessionStore.new
       submitting_session = Crumble::Server::Session.new
       other_session = Crumble::Server::Session.new
@@ -196,12 +196,15 @@ module Orma::ModelActionSpec
       other_subscriber_request_ctx = Crumble::Server::TestRequestContext.new(method: "GET", resource: Crumble::Turbo::ModelTemplateRefreshResource.uri_path, headers: other_headers, session_store: session_store)
       submitting_subscriber_ctx = Crumble::Server::HandlerContext.new(submitting_subscriber_request_ctx, TestViewHandler.new(submitting_subscriber_request_ctx))
       other_subscriber_ctx = Crumble::Server::HandlerContext.new(other_subscriber_request_ctx, TestViewHandler.new(other_subscriber_request_ctx))
-      submitting_channel = Crumble::Turbo::ModelTemplateRefreshService.subscribe(submitting_subscriber_ctx)
-      other_channel = Crumble::Turbo::ModelTemplateRefreshService.subscribe(other_subscriber_ctx)
+      submitting_channel = Crumble::Turbo::ModelTemplateRefreshService.subscribe(submitting_subscriber_ctx, "submitting-tab")
+      other_channel = Crumble::Turbo::ModelTemplateRefreshService.subscribe(other_subscriber_ctx, "other-tab")
 
       begin
-        Crumble::Turbo::ModelTemplateRefreshService.register(submitting_subscriber_ctx, model_template_id)
-        Crumble::Turbo::ModelTemplateRefreshService.register(other_subscriber_ctx, model_template_id)
+        Crumble::Turbo::ModelTemplateRefreshService.register(submitting_subscriber_ctx, "submitting-tab", [model_template_id])
+        Crumble::Turbo::ModelTemplateRefreshService.register(other_subscriber_ctx, "other-tab", [model_template_id])
+        3.times { Fiber.yield }
+        submitting_channel.receive
+        other_channel.receive
 
         response = String.build do |io|
           post_ctx = Crumble::Server::TestRequestContext.new(response_io: io, method: "POST", resource: "/a/orma/model_action_spec/my_model/#{model_id}/inc_some_number", headers: submitting_headers, session_store: session_store)
@@ -217,7 +220,7 @@ module Orma::ModelActionSpec
         when submitting_refresh = submitting_channel.receive
         when timeout(10.milliseconds)
         end
-        submitting_refresh.should be_nil
+        submitting_refresh.should_not be_nil
 
         other_refresh = nil
         select

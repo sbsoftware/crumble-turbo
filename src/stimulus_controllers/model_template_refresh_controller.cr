@@ -8,6 +8,12 @@ module Crumble
       js_method :connect do
         this.connected = false
         this.reconnect_attempts = 0
+        this.subscription_id = if crypto.randomUUID
+                                 crypto.randomUUID._call
+                               else
+                                 crypto.getRandomValues(Uint32Array.new(4)).join("-")
+                               end
+        this.subscription_url = Crumble::Turbo::ModelTemplateRefreshResource.uri_path.to_js_ref + "?subscription_id=" + encodeURIComponent(this.subscription_id)
         that = this
         this.connect_event_source_after_load = -> {
           that.connect_event_source._call
@@ -34,7 +40,7 @@ module Crumble
 
       js_method :connect_event_source do
         this.clear_reconnect_timeout._call
-        this.evt_source = EventSource.new(Crumble::Turbo::ModelTemplateRefreshResource.uri_path.to_js_ref)
+        this.evt_source = EventSource.new(this.subscription_url)
         Turbo.session.connectStreamSource(this.evt_source)
         that = this
 
@@ -98,7 +104,7 @@ module Crumble
           this.model_template_ids = model_template_ids
 
           fetch(
-            Crumble::Turbo::ModelTemplateRefreshResource.uri_path.to_js_ref,
+            this.subscription_url,
             {
               "method" => "POST",
               "body"   => JSON.stringify(model_template_ids),

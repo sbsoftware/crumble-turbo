@@ -3,7 +3,7 @@ require "../spec_helper"
 module Orma::ModelTemplateSpec
   css_class MyClass
 
-  class Model < Orma::Record
+  class Model < TestRecord
     id_column id : Int64
     column name : String?
 
@@ -49,6 +49,18 @@ module Orma::ModelTemplateSpec
   end
 
   describe "a model template" do
+    it "can refresh through its renderer" do
+      mdl = Model.create(name: "Ahsoka")
+
+      mdl.default_model_template(test_handler_context).refresh!
+    end
+
+    it "can refresh through its record" do
+      mdl = Model.create(name: "Obi-Wan")
+
+      mdl.refresh_default_model_template!
+    end
+
     it "returns a valid turbo stream template" do
       mdl = Model.new(id: 66_i64)
       mdl.name = "Bronko"

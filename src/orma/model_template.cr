@@ -33,13 +33,17 @@ class Orma::Record
         Renderer.new(ctx: ctx, model_template: self)
       end
 
+      def refresh!
+        ::Crumble::Turbo::ModelTemplateRefreshService.refresh_model_template({{@type.name.stringify}}, model.id.value, {{method_name.id.stringify}})
+      end
+
       private struct Renderer
         include Crumble::ContextView
         include IdentifiableView
 
         getter model_template : {{method_name.id.stringify.camelcase.id}}Template
 
-        delegate :dom_id, :model, to: model_template
+        delegate :dom_id, :model, :refresh!, to: model_template
 
         forward_missing_to model_template.model
 
@@ -65,9 +69,7 @@ class Orma::Record
     end
 
     def refresh_{{method_name.id}}!
-      raise ArgumentError.new("Cannot render model template for unpersisted record") unless id = self.id
-
-      ::Crumble::Turbo::ModelTemplateRefreshService.refresh_model_template({{@type.name.stringify}}, id.value, {{method_name.id.stringify}})
+      __model_template_{{method_name.id}}.refresh!
     end
   end
 end

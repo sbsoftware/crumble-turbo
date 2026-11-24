@@ -116,6 +116,14 @@ module Orma::ModelActionSpec
   end
 
   describe "when handling a request" do
+    it "matches the complete model action path" do
+      path = MyModel::IncSomeNumberAction.uri_path(123)
+      MyModel::IncSomeNumberAction.path_matcher.match(path).not_nil![1].should eq("123")
+      ["#{path}_multi", "#{path}/extra", "/extra#{path}"].each do |other_path|
+        MyModel::IncSomeNumberAction.path_matcher.match(other_path).should be_nil
+      end
+    end
+
     it "parses URL-encoded model action forms while retaining the model" do
       model = Orma::ModelActionSpec::MyModel.new(id: 8_i64)
       headers = HTTP::Headers{"Content-Type" => "application/x-www-form-urlencoded"}
